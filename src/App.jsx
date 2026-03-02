@@ -6,6 +6,8 @@ import DashboardLayout from './pages/DashboardLayout';
 import DashboardPage from './pages/DashboardPage';
 import AttachDatasetPage from './pages/AttachDatasetPage';
 import EmailNotificationsPage from './pages/EmailNotificationsPage';
+import DrillDownPage from './pages/DrillDownPage';
+import RuleMappingPage from './pages/RuleMappingPage';
 import './styles/global.css';
 
 export default function App() {
@@ -23,6 +25,8 @@ export default function App() {
             <Route index element={<DashboardPage />} />
             <Route path="attach/*" element={<AttachDatasetPage />} />
             <Route path="email/*" element={<EmailNotificationsPage />} />
+            <Route path="drilldown/*" element={<DrillDownPage />} />
+            <Route path="rulemapping/*" element={<RuleMappingPage />} />
             <Route path="*" element={<DashboardPage />} />
           </Route>
           <Route path="*" element={<Navigate to="/" replace />} />

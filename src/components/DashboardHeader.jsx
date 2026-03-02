@@ -1,7 +1,7 @@
 import { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
-import { RefreshCw, Mail } from 'lucide-react';
+import { RefreshCw, Mail, Search, GitBranch } from 'lucide-react';
 
 const formatDate = (d) => d.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
 const formatTime = (d) => d.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', second: '2-digit', hour12: true });
@@ -11,8 +11,13 @@ export default function DashboardHeader({ node, typeLabel, onRefresh }) {
   const [currentDate, setCurrentDate] = useState(new Date());
   const { user } = useAuth();
   const navigate = useNavigate();
+  const location = useLocation();
   const m = node.metrics;
   const isTeamUser = user?.role === 'team';
+  const isSchemaLevel = node.type === 'schema';
+
+  // Build current path for drill-down navigation
+  const currentPath = location.pathname.replace('/dashboard/', '').replace('/dashboard', '');
 
   const handleRefresh = () => {
     setSpinning(true);
@@ -55,6 +60,36 @@ export default function DashboardHeader({ node, typeLabel, onRefresh }) {
       </div>
 
       <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+        {isSchemaLevel && (
+          <button
+            onClick={() => navigate(`/dashboard/rulemapping/${currentPath}`)}
+            style={{
+              display: 'flex', alignItems: 'center', gap: '5px',
+              fontSize: '11px', fontWeight: 600, color: 'var(--purple)',
+              background: 'var(--purple-d)', padding: '6px 12px', borderRadius: '6px',
+              border: '1px solid rgba(167,139,250,0.25)', cursor: 'pointer', transition: 'all 0.2s',
+            }}
+            onMouseEnter={e => { e.currentTarget.style.background = 'rgba(167,139,250,0.2)'; }}
+            onMouseLeave={e => { e.currentTarget.style.background = 'var(--purple-d)'; }}
+          >
+            <GitBranch size={13} /> Rule Mapping
+          </button>
+        )}
+        {isSchemaLevel && (
+          <button
+            onClick={() => navigate(`/dashboard/drilldown/${currentPath}`)}
+            style={{
+              display: 'flex', alignItems: 'center', gap: '5px',
+              fontSize: '11px', fontWeight: 600, color: 'var(--cyan)',
+              background: 'var(--cyan-d)', padding: '6px 12px', borderRadius: '6px',
+              border: '1px solid rgba(34,211,238,0.25)', cursor: 'pointer', transition: 'all 0.2s',
+            }}
+            onMouseEnter={e => { e.currentTarget.style.background = 'rgba(34,211,238,0.2)'; }}
+            onMouseLeave={e => { e.currentTarget.style.background = 'var(--cyan-d)'; }}
+          >
+            <Search size={13} /> Drill Down
+          </button>
+        )}
         {isTeamUser && (
           <button
             onClick={() => navigate(`/dashboard/email/${user.scopePath.join('/')}`)}

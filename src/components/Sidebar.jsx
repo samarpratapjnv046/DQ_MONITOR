@@ -3,7 +3,7 @@ import { useAuth } from '../contexts/AuthContext';
 import { useNavigate, useLocation } from 'react-router-dom';
 import {
   ChevronDown, ChevronRight, Building2, Globe, Briefcase, Users, FolderOpen,
-  LogOut, LayoutDashboard, Shield, Activity, Lock, Database, Plus, Trash2, AlertTriangle, X,
+  LogOut, LayoutDashboard, Shield, Lock, Database, Plus, Trash2, AlertTriangle, X,
   Sun, Moon
 } from 'lucide-react';
 import { getAncestorChain } from '../data/orgStructure';
@@ -352,29 +352,6 @@ export default function Sidebar() {
           {user.role}
         </span>
       </div>
-
-      {/* Quick score */}
-      {tree.metrics && (
-        <div style={{
-          margin: '10px 10px 4px', padding: '10px 12px',
-          background: 'var(--elev)', borderRadius: 'var(--rs)',
-          display: 'flex', alignItems: 'center', gap: '10px',
-        }}>
-          <Activity size={14} color="var(--green)" />
-          <div style={{ flex: 1 }}>
-            <div style={{ fontSize: '9px', color: 'var(--t3)', fontWeight: 500 }}>Health Score</div>
-            <div style={{ fontSize: '18px', fontWeight: 700, color: 'var(--green)', letterSpacing: '-0.5px' }}>
-              {tree.metrics.healthScore}%
-            </div>
-          </div>
-          <div style={{ textAlign: 'right' }}>
-            <div style={{ fontSize: '9px', color: 'var(--t3)' }}>Pass Rate</div>
-            <div style={{ fontSize: '14px', fontWeight: 700, color: 'var(--blue)' }}>
-              {tree.metrics.passRate}%
-            </div>
-          </div>
-        </div>
-      )}
 
       {/* Ancestor breadcrumb */}
       {hasAncestors && (
