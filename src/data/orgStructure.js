@@ -601,6 +601,19 @@ export const addSchemaToNode = (basePath, { projectName, projectOwnerEmail, sche
   // Generate a proper schema with metrics
   const newSchema = generateSchemaMetrics(schemaId, schemaName, 'bronze', tableNames);
   newSchema.owner = projectOwnerEmail;
+  newSchema.pendingApproval = true;
+  newSchema.approvalTimestamp = Date.now();
+
+  // Find the team owner name from the parent team node
+  // Walk up from project to find team-level ancestor
+  for (let i = basePath.length - 1; i >= 0; i--) {
+    const ancestor = findNode(basePath.slice(0, i + 1));
+    if (ancestor && ancestor.type === 'team' && ancestor.owner) {
+      newSchema.approverName = ancestor.owner;
+      break;
+    }
+  }
+  if (!newSchema.approverName) newSchema.approverName = 'Team Owner';
 
   if (!projectNode.children) projectNode.children = [];
   projectNode.children.push(newSchema);

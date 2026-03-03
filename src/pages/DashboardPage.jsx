@@ -1,8 +1,8 @@
-import { useMemo, useState } from 'react';
+import { useMemo, useState, useEffect, useCallback } from 'react';
 import { useParams } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import { findNode } from '../data/orgStructure';
-import { Lock, ShieldAlert } from 'lucide-react';
+import { Lock, ShieldAlert, RefreshCw, Clock, CheckCircle2 } from 'lucide-react';
 import KPIRow from '../components/KPIRow';
 import LayersPanel from '../components/LayersPanel';
 import IssuesPanel from '../components/IssuesPanel';
@@ -13,17 +13,77 @@ import DashboardHeader from '../components/DashboardHeader';
 
 // Check if requestedPath is within user's allowed scope
 const isWithinScope = (requestedSegments, scopePath) => {
-  // The requested path must START with the full scopePath
-  // e.g. scope=['bfsi','risk_analytics'], requested=['bfsi','risk_analytics'] → ok
-  // e.g. scope=['bfsi','risk_analytics'], requested=['bfsi','risk_analytics','credit_risk_models'] → ok
-  // e.g. scope=['bfsi','risk_analytics'], requested=['bfsi'] → NOT ok (ancestor)
-  // e.g. scope=['bfsi','risk_analytics'], requested=['cpg'] → NOT ok (different branch)
   if (requestedSegments.length < scopePath.length) return false;
   for (let i = 0; i < scopePath.length; i++) {
     if (requestedSegments[i] !== scopePath[i]) return false;
   }
   return true;
 };
+
+// Approval wait screen for newly added schemas
+function ApprovalWaitScreen({ node, onApproved }) {
+  const [spinning, setSpinning] = useState(false);
+
+  // Auto-approve after 10 seconds
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      node.pendingApproval = false;
+      onApproved();
+    }, 10000);
+    return () => clearTimeout(timer);
+  }, [node, onApproved]);
+
+  const handleRefresh = () => {
+    setSpinning(true);
+    // Do nothing until the auto-approval timer (10s) completes
+    setTimeout(() => setSpinning(false), 800);
+  };
+
+  return (
+    <div style={{
+      height: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center',
+      flexDirection: 'column', gap: '20px', padding: '40px',
+    }}>
+      <div style={{
+        width: '72px', height: '72px', borderRadius: '18px',
+        background: 'rgba(251,191,36,0.1)', border: '1px solid rgba(251,191,36,0.2)',
+        display: 'flex', alignItems: 'center', justifyContent: 'center',
+        animation: 'pulse 2s ease-in-out infinite',
+      }}>
+        <Clock size={32} color="var(--amber)" />
+      </div>
+      <div style={{ fontSize: '18px', fontWeight: 700, color: 'var(--t1)' }}>
+        Waiting for Approval
+      </div>
+      <div style={{
+        fontSize: '13px', color: 'var(--t2)', textAlign: 'center', maxWidth: '440px', lineHeight: 1.7,
+      }}>
+        Schema <strong style={{ color: 'var(--t1)' }}>{node.name}</strong> has been submitted and is
+        waiting for approval from <strong style={{ color: 'var(--amber)' }}>{node.approverName || 'Team Owner'}</strong>.
+      </div>
+      <div style={{
+        padding: '10px 16px', borderRadius: '10px',
+        background: 'rgba(251,191,36,0.06)', border: '1px solid rgba(251,191,36,0.15)',
+        fontSize: '11px', color: 'var(--amber)', display: 'flex', alignItems: 'center', gap: '8px',
+      }}>
+        <Clock size={13} /> Approval is being processed...
+      </div>
+      <button onClick={handleRefresh} style={{
+        display: 'flex', alignItems: 'center', gap: '8px', fontSize: '13px', fontWeight: 700,
+        color: '#0B0F1A', background: 'linear-gradient(135deg, var(--amber), #F59E0B)',
+        padding: '12px 28px', borderRadius: '10px', border: 'none', cursor: 'pointer',
+        transition: 'all 0.2s', marginTop: '4px',
+      }}
+        onMouseEnter={e => { e.currentTarget.style.transform = 'translateY(-1px)'; e.currentTarget.style.boxShadow = '0 6px 20px rgba(251,191,36,0.3)'; }}
+        onMouseLeave={e => { e.currentTarget.style.transform = 'translateY(0)'; e.currentTarget.style.boxShadow = 'none'; }}
+      >
+        <RefreshCw size={15} style={{ animation: spinning ? 'spin 0.6s linear infinite' : 'none' }} />
+        Refresh Status
+      </button>
+      <style>{`@keyframes pulse { 0%, 100% { transform: scale(1); opacity: 1; } 50% { transform: scale(1.06); opacity: 0.85; } }`}</style>
+    </div>
+  );
+}
 
 export default function DashboardPage() {
   const { '*': pathParam } = useParams();
@@ -105,10 +165,15 @@ export default function DashboardPage() {
     );
   }
 
+  // Show approval wait screen for newly added schemas
+  if (node.pendingApproval) {
+    return <ApprovalWaitScreen node={node} onApproved={() => setRefreshKey(k => k + 1)} />;
+  }
+
   const m = node.metrics;
   const typeLabel = node.type === 'org' ? 'Organization' : node.type === 'domain' ? 'Domain' :
     node.type === 'bu' ? 'Business Unit' : node.type === 'team' ? 'Team' :
-    node.type === 'schema' ? 'Schema' : 'Project';
+      node.type === 'schema' ? 'Schema' : 'Project';
 
   return (
     <div style={{ height: '100vh', display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>

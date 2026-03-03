@@ -359,7 +359,10 @@ export default function AttachDatasetPage() {
           <div><span style={{ color: 'var(--t3)' }}>Schedule:</span> <strong>{form.scheduleType}</strong></div>
         </div>
         <div style={{ display: 'flex', gap: '10px', marginTop: '8px' }}>
-          <button onClick={() => navigate(`/dashboard/${segments.join('/')}`)} style={btnPrimary}>Go to Dashboard</button>
+          <button onClick={() => {
+            const schemaId = form.schemaName.toLowerCase().replace(/[\s\-]+/g, '_');
+            navigate(`/dashboard/${segments.join('/')}/${schemaId}`);
+          }} style={btnPrimary}>Go to Dashboard</button>
           <button onClick={() => { setSubmitted(false); setStep(0); setForm(f => ({ ...f, source: '', ruleMappingDone: false, manualApplied: false })); }} style={btnSecondary}>Attach Another</button>
         </div>
       </div>

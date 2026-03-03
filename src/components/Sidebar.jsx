@@ -356,6 +356,15 @@ function NavItem({ node, path, depth = 0, activePath, isTeamUser, isProjectUser,
             Waiting for approval
           </span>
         )}
+        {node.approved && (
+          <span style={{
+            fontSize: '8px', fontWeight: 600, padding: '2px 5px', borderRadius: '3px',
+            background: 'rgba(52,211,153,0.12)', color: 'var(--green)',
+            textTransform: 'uppercase', letterSpacing: '0.4px', flexShrink: 0, marginLeft: 4,
+          }}>
+            Approved
+          </span>
+        )}
       </div>
       {open && hasChildren && (
         <div>
@@ -419,7 +428,7 @@ function AncestorItem({ node, isLast }) {
 // ══════════════════════════════════════════════════════════════
 
 export default function Sidebar() {
-  const { user, logout, getTree, treeVersion } = useAuth();
+  const { user, logout, getTree, treeVersion, refreshTree } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
   const tree = useMemo(() => getTree(), [getTree, treeVersion]);
@@ -467,7 +476,7 @@ export default function Sidebar() {
     }
 
     if (projectNode && projectNode.children) {
-      // Instead of removing the schemas, mark them as waiting for approval
+      // Mark schemas as waiting for approval
       projectNode.children.forEach(c => {
         if (selectedSchemas.includes(c.id)) {
           c.waitingForApproval = true;
@@ -477,9 +486,34 @@ export default function Sidebar() {
 
     setDeleteTarget(null);
     showToast('Sent request');
-
-    // Navigate back to team dashboard
     navigate(`/dashboard/${user.scopePath.join('/')}`);
+
+    // After 6-7 seconds, mark as approved then delete
+    const delay = 6000 + Math.random() * 1000; // 6-7 sec
+    setTimeout(() => {
+      if (projectNode && projectNode.children) {
+        // Mark as approved
+        projectNode.children.forEach(c => {
+          if (selectedSchemas.includes(c.id) && c.waitingForApproval) {
+            c.waitingForApproval = false;
+            c.approved = true;
+          }
+        });
+        refreshTree();
+        showToast('Request approved');
+
+        // Actually remove the schemas after a brief moment
+        setTimeout(() => {
+          if (projectNode.children) {
+            projectNode.children = projectNode.children.filter(
+              c => !selectedSchemas.includes(c.id) || !c.approved
+            );
+          }
+          refreshTree();
+          navigate(`/dashboard/${user.scopePath.join('/')}`);
+        }, 1500);
+      }
+    }, delay);
   };
 
   return (
