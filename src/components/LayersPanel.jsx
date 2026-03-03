@@ -35,7 +35,7 @@ const LayerBar = ({ label, layerKey, rate, passed, total }) => {
     }}>
       <div style={{
         fontSize: '8.5px', fontWeight: 600, letterSpacing: '0.5px', textTransform: 'uppercase',
-        padding: '3px 7px', borderRadius: '5px', width: '70px', textAlign: 'center',
+        padding: '3px 7px', borderRadius: '5px', width: '110px', textAlign: 'center',
         background: style.badge.bg, color: style.badge.color,
       }}>
         {label}
@@ -66,11 +66,11 @@ export default function LayersPanel({ metrics: m }) {
       <div style={{ fontSize: '11.5px', fontWeight: 600, marginBottom: '10px', display: 'flex', alignItems: 'center', gap: '7px' }}>
         <span style={{ fontSize: '13px' }}>◎</span> Pass Rate by Validation Layer
       </div>
-      <LayerBar label="Schema" layerKey="schema"
+      <LayerBar label="Datatype Check" layerKey="schema"
         rate={m.schema.rate} passed={m.schema.passed} total={m.schema.total} />
-      <LayerBar label="Table" layerKey="table"
+      <LayerBar label="Table level rule" layerKey="table"
         rate={m.table.rate} passed={m.table.passed} total={m.table.total} />
-      <LayerBar label="Data Qual" layerKey="dq"
+      <LayerBar label="Data Quality Check" layerKey="dq"
         rate={m.dq.rate} passed={m.dq.passed} total={m.dq.total} />
     </div>
   );

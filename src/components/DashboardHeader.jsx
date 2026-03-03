@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
-import { RefreshCw, Mail, Search, GitBranch } from 'lucide-react';
+import { RefreshCw, Mail, Search, GitBranch, User, Clock } from 'lucide-react';
 
 const formatDate = (d) => d.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
 const formatTime = (d) => d.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', second: '2-digit', hour12: true });
@@ -36,16 +36,17 @@ export default function DashboardHeader({ node, typeLabel, onRefresh }) {
 
   return (
     <div style={{
-      height: '48px', background: 'var(--hdr-bg)', backdropFilter: 'blur(16px)',
-      borderBottom: '1px solid var(--bdr)', padding: '0 24px',
+      minHeight: '48px', background: 'var(--hdr-bg)', backdropFilter: 'blur(16px)',
+      borderBottom: '1px solid var(--bdr)', padding: '6px 24px',
       display: 'flex', alignItems: 'center', justifyContent: 'space-between',
     }}>
+      {/* Left: title & metadata */}
       <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
         <div style={{
           width: '30px', height: '30px',
           background: `linear-gradient(135deg, ${typeColors[node.type] || 'var(--green)'}, var(--blue))`,
           borderRadius: '8px', display: 'flex', alignItems: 'center', justifyContent: 'center',
-          fontWeight: 700, fontSize: '11px', color: 'var(--bg)',
+          fontWeight: 700, fontSize: '11px', color: 'var(--bg)', flexShrink: 0,
         }}>
           DQ
         </div>
@@ -56,9 +57,39 @@ export default function DashboardHeader({ node, typeLabel, onRefresh }) {
           <div style={{ fontSize: '10.5px', color: 'var(--t2)' }}>
             {typeLabel} · {node.totalTables || m.totalTables} Tables · {m.totalRules} Rules
           </div>
+          {isSchemaLevel && node.owner && (
+            <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginTop: '3px', flexWrap: 'wrap' }}>
+              <span style={{
+                display: 'inline-flex', alignItems: 'center', gap: '4px',
+                fontSize: '9px', fontWeight: 600, padding: '2px 8px', borderRadius: '4px',
+                background: 'rgba(167,139,250,0.1)', color: '#A78BFA',
+              }}>
+                <User size={9} /> Owner: {node.owner}
+              </span>
+              {node.users && node.users.length > 0 && (
+                <span style={{
+                  display: 'inline-flex', alignItems: 'center', gap: '4px',
+                  fontSize: '9px', fontWeight: 600, padding: '2px 8px', borderRadius: '4px',
+                  background: 'rgba(34,211,238,0.1)', color: '#22D3EE',
+                }}>
+                  <User size={9} /> Users: {node.users.join(', ')}
+                </span>
+              )}
+              {node.createdAt && (
+                <span style={{
+                  display: 'inline-flex', alignItems: 'center', gap: '4px',
+                  fontSize: '9px', fontWeight: 600, padding: '2px 8px', borderRadius: '4px',
+                  background: 'rgba(96,165,250,0.1)', color: '#60A5FA',
+                }}>
+                  <Clock size={9} /> Created: {node.createdAt}
+                </span>
+              )}
+            </div>
+          )}
         </div>
       </div>
 
+      {/* Right: action buttons */}
       <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
         {isSchemaLevel && (
           <button
@@ -90,9 +121,9 @@ export default function DashboardHeader({ node, typeLabel, onRefresh }) {
             <Search size={13} /> Drill Down
           </button>
         )}
-        {isTeamUser && (
+        {(isTeamUser || user?.role === 'project') && (
           <button
-            onClick={() => navigate(`/dashboard/email/${user.scopePath.join('/')}`)}
+            onClick={() => navigate(`/dashboard/email/${currentPath}`)}
             style={{
               display: 'flex', alignItems: 'center', gap: '5px',
               fontSize: '11px', fontWeight: 600, color: 'var(--amber)',

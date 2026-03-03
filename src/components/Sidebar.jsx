@@ -17,8 +17,42 @@ const typeConfig = {
   schema: { icon: Database, color: '#f472b6', label: 'Schema' },
 };
 
+// ── Toast ──
+function Toast({ msg, type, visible }) {
+  return (
+    <div style={{
+      position: 'fixed', bottom: 24, left: 'calc(var(--sidebar-w) / 2)',
+      transform: `translateX(-50%) ${visible ? 'translateY(0)' : 'translateY(80px)'}`,
+      background: 'var(--card)', border: `1px solid ${type === 'error' ? 'var(--red)' : 'var(--green)'}`,
+      borderRadius: 'var(--rs)', padding: '12px 20px',
+      color: type === 'error' ? 'var(--red)' : 'var(--green)',
+      fontSize: 12, fontWeight: 600, display: 'flex', alignItems: 'center', gap: 8,
+      zIndex: 9999, opacity: visible ? 1 : 0, transition: 'all 0.3s', pointerEvents: visible ? 'auto' : 'none',
+      boxShadow: '0 10px 30px rgba(0,0,0,0.3)',
+    }}>
+      {type === 'error' ? '✕' : '✓'} {msg}
+    </div>
+  );
+}
+
 // ── Delete Confirmation Modal ──
-function DeleteConfirmModal({ projectName, onConfirm, onCancel }) {
+function DeleteConfirmModal({ projectName, schemas, onConfirm, onCancel }) {
+  const [selectedSchemas, setSelectedSchemas] = useState([]);
+
+  const toggleSchema = (id) => {
+    setSelectedSchemas(prev =>
+      prev.includes(id) ? prev.filter(s => s !== id) : [...prev, id]
+    );
+  };
+
+  const toggleAll = () => {
+    if (selectedSchemas.length === schemas.length) {
+      setSelectedSchemas([]);
+    } else {
+      setSelectedSchemas(schemas.map(s => s.id));
+    }
+  };
+
   return (
     <div style={{
       position: 'fixed', inset: 0, zIndex: 9999,
@@ -26,7 +60,7 @@ function DeleteConfirmModal({ projectName, onConfirm, onCancel }) {
       display: 'flex', alignItems: 'center', justifyContent: 'center',
     }} onClick={onCancel}>
       <div onClick={e => e.stopPropagation()} style={{
-        width: '380px', background: 'var(--card)', border: '1px solid var(--bdr)',
+        width: '420px', background: 'var(--card)', border: '1px solid var(--bdr)',
         borderRadius: '16px', padding: '24px', boxShadow: '0 20px 60px rgba(0,0,0,0.5)',
       }}>
         {/* Header */}
@@ -38,7 +72,10 @@ function DeleteConfirmModal({ projectName, onConfirm, onCancel }) {
             }}>
               <AlertTriangle size={18} color="var(--red)" />
             </div>
-            <div style={{ fontSize: '14px', fontWeight: 700, color: 'var(--t1)' }}>Delete Project</div>
+            <div>
+              <div style={{ fontSize: '14px', fontWeight: 700, color: 'var(--t1)' }}>Delete Request</div>
+              <div style={{ fontSize: '10px', color: 'var(--t3)', marginTop: '2px' }}>{projectName}</div>
+            </div>
           </div>
           <div onClick={onCancel} style={{ cursor: 'pointer', color: 'var(--t3)', padding: '4px' }}>
             <X size={16} />
@@ -46,22 +83,95 @@ function DeleteConfirmModal({ projectName, onConfirm, onCancel }) {
         </div>
 
         {/* Body */}
-        <div style={{ fontSize: '12px', color: 'var(--t2)', lineHeight: 1.7, marginBottom: '20px' }}>
-          Are you sure you want to delete{' '}
-          <strong style={{ color: 'var(--t1)' }}>{projectName}</strong>?
-          This will permanently remove the project and all its schemas, tables, and validation data.
-          This action cannot be undone.
+        <div style={{ fontSize: '12px', color: 'var(--t2)', lineHeight: 1.7, marginBottom: '16px' }}>
+          Select the schemas you want to request deletion for in{' '}
+          <strong style={{ color: 'var(--t1)' }}>{projectName}</strong>.
         </div>
 
-        {/* Warning box */}
+        {/* Schema selection */}
+        <div style={{
+          background: 'var(--bg)', border: '1px solid var(--bdr)', borderRadius: '10px',
+          padding: '10px', marginBottom: '16px', maxHeight: '180px', overflowY: 'auto',
+        }}>
+          {/* Select all */}
+          <div
+            onClick={toggleAll}
+            style={{
+              display: 'flex', alignItems: 'center', gap: '10px', padding: '7px 8px',
+              borderRadius: '6px', cursor: 'pointer', marginBottom: '4px',
+              background: 'var(--elev)', transition: 'all 0.15s',
+            }}
+          >
+            <div style={{
+              width: '16px', height: '16px', borderRadius: '4px',
+              border: `1.5px solid ${selectedSchemas.length === schemas.length && schemas.length > 0 ? 'var(--blue)' : 'var(--bdr)'}`,
+              background: selectedSchemas.length === schemas.length && schemas.length > 0 ? 'var(--blue)' : 'transparent',
+              display: 'flex', alignItems: 'center', justifyContent: 'center',
+              transition: 'all 0.15s', flexShrink: 0,
+            }}>
+              {selectedSchemas.length === schemas.length && schemas.length > 0 && (
+                <span style={{ color: '#fff', fontSize: '10px', fontWeight: 700 }}>✓</span>
+              )}
+            </div>
+            <span style={{ fontSize: '10px', fontWeight: 600, color: 'var(--t2)', textTransform: 'uppercase', letterSpacing: '0.4px' }}>
+              Select All ({schemas.length})
+            </span>
+          </div>
+
+          {schemas.length === 0 && (
+            <div style={{ textAlign: 'center', padding: '14px', fontSize: '11px', color: 'var(--t3)' }}>
+              No schemas found in this project.
+            </div>
+          )}
+
+          {schemas.map(schema => {
+            const checked = selectedSchemas.includes(schema.id);
+            return (
+              <div
+                key={schema.id}
+                onClick={() => toggleSchema(schema.id)}
+                style={{
+                  display: 'flex', alignItems: 'center', gap: '10px', padding: '8px',
+                  borderRadius: '6px', cursor: 'pointer', transition: 'all 0.15s',
+                  background: checked ? 'rgba(248,113,113,0.04)' : 'transparent',
+                }}
+                onMouseEnter={e => { if (!checked) e.currentTarget.style.background = 'var(--elev)'; }}
+                onMouseLeave={e => { if (!checked) e.currentTarget.style.background = 'transparent'; }}
+              >
+                <div style={{
+                  width: '16px', height: '16px', borderRadius: '4px',
+                  border: `1.5px solid ${checked ? 'var(--red)' : 'var(--bdr)'}`,
+                  background: checked ? 'var(--red)' : 'transparent',
+                  display: 'flex', alignItems: 'center', justifyContent: 'center',
+                  transition: 'all 0.15s', flexShrink: 0,
+                }}>
+                  {checked && <span style={{ color: '#fff', fontSize: '10px', fontWeight: 700 }}>✓</span>}
+                </div>
+                <Database size={12} color="#f472b6" />
+                <span style={{ fontSize: '11px', fontWeight: 500, color: 'var(--t1)', flex: 1 }}>
+                  {schema.name}
+                </span>
+                <span style={{
+                  fontSize: '8px', fontWeight: 600, padding: '2px 6px', borderRadius: '3px',
+                  background: 'rgba(244,114,182,0.1)', color: '#f472b6',
+                  textTransform: 'uppercase', letterSpacing: '0.4px',
+                }}>
+                  Schema
+                </span>
+              </div>
+            );
+          })}
+        </div>
+
+        {/* Info box */}
         <div style={{
           padding: '10px 14px', borderRadius: '8px',
-          background: 'rgba(248,113,113,0.06)', border: '1px solid rgba(248,113,113,0.15)',
-          fontSize: '10px', color: 'var(--red)', display: 'flex', alignItems: 'center', gap: '8px',
-          marginBottom: '20px',
+          background: 'rgba(96,165,250,0.06)', border: '1px solid rgba(96,165,250,0.15)',
+          fontSize: '10px', color: 'var(--blue)', display: 'flex', alignItems: 'start', gap: '8px',
+          marginBottom: '20px', lineHeight: 1.6,
         }}>
-          <AlertTriangle size={12} />
-          All associated schemas, DQ rules, historical runs, and trend data will be lost.
+          <AlertTriangle size={12} style={{ flexShrink: 0, marginTop: '2px' }} />
+          <span>The request to delete the selected schema(s) will be sent to the team leader for approval. No data will be removed until the request is approved.</span>
         </div>
 
         {/* Buttons */}
@@ -73,12 +183,29 @@ function DeleteConfirmModal({ projectName, onConfirm, onCancel }) {
           }}>
             Cancel
           </button>
-          <button onClick={onConfirm} style={{
-            padding: '9px 20px', borderRadius: '8px', fontSize: '12px', fontWeight: 700,
-            background: 'var(--red)', border: 'none', color: '#fff',
-            cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '6px',
-          }}>
-            <Trash2 size={12} /> Delete Project
+          <button
+            onClick={() => onConfirm(selectedSchemas)}
+            disabled={selectedSchemas.length === 0}
+            style={{
+              padding: '9px 20px', borderRadius: '8px', fontSize: '12px', fontWeight: 700,
+              background: selectedSchemas.length > 0 ? 'var(--blue)' : 'var(--elev)',
+              border: 'none',
+              color: selectedSchemas.length > 0 ? '#fff' : 'var(--t3)',
+              cursor: selectedSchemas.length > 0 ? 'pointer' : 'not-allowed',
+              display: 'flex', alignItems: 'center', gap: '6px',
+              transition: 'all 0.2s',
+              opacity: selectedSchemas.length > 0 ? 1 : 0.6,
+            }}
+          >
+            ✉ Send Request
+            {selectedSchemas.length > 0 && (
+              <span style={{
+                fontSize: '9px', fontWeight: 700, padding: '1px 6px', borderRadius: '8px',
+                background: 'rgba(255,255,255,0.2)',
+              }}>
+                {selectedSchemas.length}
+              </span>
+            )}
           </button>
         </div>
       </div>
@@ -87,7 +214,7 @@ function DeleteConfirmModal({ projectName, onConfirm, onCancel }) {
 }
 
 // ── Navigable tree item ──
-function NavItem({ node, path, depth = 0, activePath, isTeamUser, onDeleteProject }) {
+function NavItem({ node, path, depth = 0, activePath, isTeamUser, isProjectUser, onDeleteProject }) {
   const [open, setOpen] = useState(depth < 2);
   const navigate = useNavigate();
   const hasChildren = node.children && node.children.length > 0;
@@ -96,14 +223,21 @@ function NavItem({ node, path, depth = 0, activePath, isTeamUser, onDeleteProjec
   const pathStr = path.join('/');
   const isActive = activePath === pathStr;
 
-  // Only team-level users see the attach (+) button, only on their own team node
-  const canAttach = isTeamUser && node.type === 'team';
-  // Only team-level users can delete projects
-  const canDelete = isTeamUser && node.type === 'project';
+  // Team-level users see "+" on team node → Create Project
+  const canCreateProject = isTeamUser && node.type === 'team';
+  // Team or project-level users see "+" on project node → Attach Schema
+  const canAttachSchema = (isTeamUser || isProjectUser) && node.type === 'project';
+  // Team or project-level users can request deletion on project nodes
+  const canDelete = (isTeamUser || isProjectUser) && node.type === 'project';
 
   const handleClick = () => navigate(`/dashboard/${pathStr}`);
 
-  const handleAttach = (e) => {
+  const handleCreateProject = (e) => {
+    e.stopPropagation();
+    navigate(`/dashboard/create-project/${pathStr}`);
+  };
+
+  const handleAttachSchema = (e) => {
     e.stopPropagation();
     navigate(`/dashboard/attach/${pathStr}`);
   };
@@ -136,17 +270,28 @@ function NavItem({ node, path, depth = 0, activePath, isTeamUser, onDeleteProjec
           </span>
         ) : <span style={{ width: 12 }} />}
         <Icon size={13} color={config.color} strokeWidth={2} />
-        <span style={{
-          fontSize: '11px', fontWeight: isActive ? 600 : 500,
-          color: isActive ? 'var(--t1)' : 'var(--t2)',
-          flex: 1, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
-        }}>
-          {node.emoji ? `${node.emoji} ` : ''}{node.name}
-        </span>
+        <div style={{ flex: 1, minWidth: 0 }}>
+          <span style={{
+            fontSize: '11px', fontWeight: isActive ? 600 : 500,
+            color: isActive ? 'var(--t1)' : 'var(--t2)',
+            overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', display: 'block',
+          }}>
+            {node.emoji ? `${node.emoji} ` : ''}{node.name}
+          </span>
+          {node.owner && (
+            <span style={{
+              fontSize: '9px', color: 'var(--t3)', fontWeight: 400,
+              display: 'block', marginTop: '1px',
+              overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
+            }}>
+              Owner: {node.owner}
+            </span>
+          )}
+        </div>
 
-        {/* Attach button (team only) */}
-        {canAttach && (
-          <span onClick={handleAttach} title={`Attach dataset to ${node.name}`}
+        {/* Create Project button (team node, team users only) */}
+        {canCreateProject && (
+          <span onClick={handleCreateProject} title={`Create project in ${node.name}`}
             style={{
               display: 'flex', alignItems: 'center', justifyContent: 'center',
               width: '18px', height: '18px', borderRadius: '5px',
@@ -157,6 +302,22 @@ function NavItem({ node, path, depth = 0, activePath, isTeamUser, onDeleteProjec
             onMouseLeave={e => { e.currentTarget.style.background = 'rgba(96,165,250,0.08)'; e.currentTarget.style.borderColor = 'rgba(96,165,250,0.15)'; }}
           >
             <Plus size={10} color="var(--blue)" strokeWidth={2.5} />
+          </span>
+        )}
+
+        {/* Attach Schema button (project node, team or project users) */}
+        {canAttachSchema && (
+          <span onClick={handleAttachSchema} title={`Attach schema to ${node.name}`}
+            style={{
+              display: 'flex', alignItems: 'center', justifyContent: 'center',
+              width: '18px', height: '18px', borderRadius: '5px',
+              background: 'rgba(52,211,153,0.08)', border: '1px solid rgba(52,211,153,0.15)',
+              cursor: 'pointer', flexShrink: 0, transition: 'all 0.15s',
+            }}
+            onMouseEnter={e => { e.currentTarget.style.background = 'rgba(52,211,153,0.2)'; e.currentTarget.style.borderColor = 'rgba(52,211,153,0.4)'; }}
+            onMouseLeave={e => { e.currentTarget.style.background = 'rgba(52,211,153,0.08)'; e.currentTarget.style.borderColor = 'rgba(52,211,153,0.15)'; }}
+          >
+            <Plus size={10} color="var(--green)" strokeWidth={2.5} />
           </span>
         )}
 
@@ -184,6 +345,17 @@ function NavItem({ node, path, depth = 0, activePath, isTeamUser, onDeleteProjec
         }}>
           {node.type === 'bu' ? 'BU' : node.type}
         </span>
+
+        {/* Approval Pending badge */}
+        {node.waitingForApproval && (
+          <span style={{
+            fontSize: '8px', fontWeight: 600, padding: '2px 5px', borderRadius: '3px',
+            background: 'var(--amber-d)', color: 'var(--amber)',
+            textTransform: 'uppercase', letterSpacing: '0.4px', flexShrink: 0, marginLeft: 4,
+          }}>
+            Waiting for approval
+          </span>
+        )}
       </div>
       {open && hasChildren && (
         <div>
@@ -195,6 +367,7 @@ function NavItem({ node, path, depth = 0, activePath, isTeamUser, onDeleteProjec
               depth={depth + 1}
               activePath={activePath}
               isTeamUser={isTeamUser}
+              isProjectUser={isProjectUser}
               onDeleteProject={onDeleteProject}
             />
           ))}
@@ -252,6 +425,12 @@ export default function Sidebar() {
   const tree = useMemo(() => getTree(), [getTree]);
   const [deleteTarget, setDeleteTarget] = useState(null);
   const [theme, setTheme] = useState(() => localStorage.getItem('dq_theme') || 'dark');
+  const [toast, setToast] = useState({ msg: '', type: '', visible: false });
+
+  const showToast = (msg, type = 'success') => {
+    setToast({ msg, type, visible: true });
+    setTimeout(() => setToast(t => ({ ...t, visible: false })), 3000);
+  };
 
   const toggleTheme = () => {
     const next = theme === 'dark' ? 'light' : 'dark';
@@ -271,30 +450,34 @@ export default function Sidebar() {
   const activePath = urlPath || user.scopePath.join('/');
   const hasAncestors = ancestors.length > 0;
   const isTeamUser = user.role === 'team';
+  const isProjectUser = user.role === 'project';
 
   const handleDeleteProject = (node, path) => {
     setDeleteTarget({ node, path });
   };
 
-  const confirmDelete = () => {
-    if (!deleteTarget) return;
-    // Walk the tree to find the parent and remove the project
+  const confirmDelete = (selectedSchemas) => {
+    if (!deleteTarget || !selectedSchemas?.length) return;
+
     const { path } = deleteTarget;
-    const parentPath = path.slice(0, -1);
-    // Find parent node in the actual tree
-    let parent = tree;
-    for (const seg of parentPath.slice(user.scopePath.length)) {
-      parent = parent.children?.find(c => c.id === seg);
-      if (!parent) break;
+    let projectNode = tree;
+    for (const seg of path.slice(user.scopePath.length)) {
+      projectNode = projectNode.children?.find(c => c.id === seg);
+      if (!projectNode) break;
     }
-    if (parent && parent.children) {
-      const projectId = path[path.length - 1];
-      const idx = parent.children.findIndex(c => c.id === projectId);
-      if (idx !== -1) {
-        parent.children.splice(idx, 1);
-      }
+
+    if (projectNode && projectNode.children) {
+      // Instead of removing the schemas, mark them as waiting for approval
+      projectNode.children.forEach(c => {
+        if (selectedSchemas.includes(c.id)) {
+          c.waitingForApproval = true;
+        }
+      });
     }
+
     setDeleteTarget(null);
+    showToast('Sent request');
+
     // Navigate back to team dashboard
     navigate(`/dashboard/${user.scopePath.join('/')}`);
   };
@@ -398,6 +581,7 @@ export default function Sidebar() {
           depth={0}
           activePath={activePath}
           isTeamUser={isTeamUser}
+          isProjectUser={isProjectUser}
           onDeleteProject={handleDeleteProject}
         />
       </div>
@@ -452,10 +636,14 @@ export default function Sidebar() {
       {deleteTarget && (
         <DeleteConfirmModal
           projectName={deleteTarget.node.name}
+          schemas={deleteTarget.node.children || []}
           onConfirm={confirmDelete}
           onCancel={() => setDeleteTarget(null)}
         />
       )}
+
+      {/* Toast Notification */}
+      <Toast msg={toast.msg} type={toast.type} visible={toast.visible} />
     </div>
   );
 }

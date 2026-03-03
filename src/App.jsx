@@ -7,7 +7,9 @@ import DashboardPage from './pages/DashboardPage';
 import AttachDatasetPage from './pages/AttachDatasetPage';
 import EmailNotificationsPage from './pages/EmailNotificationsPage';
 import DrillDownPage from './pages/DrillDownPage';
+import TableDetailPage from './pages/TableDetailPage';
 import RuleMappingPage from './pages/RuleMappingPage';
+import CreateProjectPage from './pages/CreateProjectPage';
 import './styles/global.css';
 
 export default function App() {
@@ -26,7 +28,9 @@ export default function App() {
             <Route path="attach/*" element={<AttachDatasetPage />} />
             <Route path="email/*" element={<EmailNotificationsPage />} />
             <Route path="drilldown/*" element={<DrillDownPage />} />
+            <Route path="table/:tableName/*" element={<TableDetailPage />} />
             <Route path="rulemapping/*" element={<RuleMappingPage />} />
+            <Route path="create-project/*" element={<CreateProjectPage />} />
             <Route path="*" element={<DashboardPage />} />
           </Route>
           <Route path="*" element={<Navigate to="/" replace />} />

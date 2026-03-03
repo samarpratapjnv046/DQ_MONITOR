@@ -33,6 +33,7 @@ export default function LoginPage() {
     domain: users.filter(u => u.role === 'domain'),
     bu: users.filter(u => u.role === 'bu'),
     team: users.filter(u => u.role === 'team'),
+    project: users.filter(u => u.role === 'project'),
   };
 
   return (
@@ -151,10 +152,10 @@ export default function LoginPage() {
             <div key={role} style={{ marginBottom: '12px' }}>
               <div style={{
                 fontSize: '9px', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.7px',
-                color: role === 'org' ? 'var(--green)' : role === 'domain' ? 'var(--blue)' : role === 'bu' ? 'var(--purple)' : 'var(--cyan)',
+                color: role === 'org' ? 'var(--green)' : role === 'domain' ? 'var(--blue)' : role === 'bu' ? 'var(--purple)' : role === 'project' ? 'var(--amber)' : 'var(--cyan)',
                 marginBottom: '6px', padding: '4px 0',
               }}>
-                {role === 'org' ? '🏢 Organization' : role === 'domain' ? '🌐 Domain' : role === 'bu' ? '📊 Business Unit' : '👥 Team'}
+                {role === 'org' ? '🏢 Organization' : role === 'domain' ? '🌐 Domain' : role === 'bu' ? '📊 Business Unit' : role === 'project' ? '📁 Project' : '👥 Team'}
               </div>
               {roleUsers.map(u => (
                 <div

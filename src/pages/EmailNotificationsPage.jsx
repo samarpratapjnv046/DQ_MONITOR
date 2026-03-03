@@ -2,7 +2,8 @@ import { useState, useRef, useCallback } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import { findNode } from '../data/orgStructure';
-import { ArrowLeft, X } from 'lucide-react';
+import organization from '../data/orgStructure';
+import { ArrowLeft, X, Building2, Globe, Briefcase, Users, FolderOpen, Database, Shield } from 'lucide-react';
 
 // ══════════════════════════════════════════════════════════════
 // TOAST
@@ -106,6 +107,41 @@ export default function EmailNotificationsPage() {
   const [toast, setToast] = useState({ msg: '', type: '', visible: false });
 
   const scopeName = node?.name || 'MAPPED_DATA';
+
+  // ── Build hierarchy to get owner names ──
+  const hierarchy = (() => {
+    let current = organization;
+    const items = [];
+    for (const seg of segments) {
+      const child = current.children?.find(c => c.id === seg);
+      if (!child) break;
+      items.push(child);
+      current = child;
+    }
+    return items;
+  })();
+
+  const teamNode = hierarchy.find(n => n.type === 'team');
+  const projectNode = hierarchy.find(n => n.type === 'project');
+  const schemaNode = hierarchy.find(n => n.type === 'schema');
+
+  const teamOwner = teamNode?.owner || null;
+  const projectOwner = projectNode?.owner || null;
+  const schemaOwner = schemaNode?.owner || null;
+
+  // ── Context-aware: show info for the CURRENT node level ──
+  const nodeType = node?.type || 'schema';
+  const contextOwner = nodeType === 'team' ? teamOwner : nodeType === 'project' ? projectOwner : schemaOwner;
+  const contextName = node?.name || scopeName;
+  const contextLabel = nodeType === 'team' ? 'Team' : nodeType === 'project' ? 'Project' : 'Schema';
+  const contextColor = nodeType === 'team' ? 'var(--cyan)' : nodeType === 'project' ? 'var(--amber)' : '#f472b6';
+  const ContextIcon = nodeType === 'team' ? Users : nodeType === 'project' ? FolderOpen : Database;
+
+  // Build subject/body label based on current scope
+  const emailScopeLabel = contextName;
+
+  // Real failing tables from the node's metrics
+  const failingTables = node?.metrics?.failingTables || [];
 
   const showToast = useCallback((msg, type = '') => {
     setToast({ msg, type, visible: true });
@@ -239,103 +275,69 @@ export default function EmailNotificationsPage() {
           </div>
         </div>
 
-        {/* ═══ Section 2: Contacts + Compose (side by side) ═══ */}
-        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 14 }}>
-
-          {/* LEFT: Contacts */}
-          <div className="anim d2" style={pnl}>
-            <div style={pnlT}>◎ Email Contacts — Senders & Receivers</div>
-            <div style={pnlSub}>Add email addresses, assign type (sender/receiver), then set TO / CC / BCC role for each receiver.</div>
-
-            {/* Add form */}
-            <div style={{ display: 'flex', gap: 8, marginBottom: 12 }}>
-              <input style={{ ...cInp, flex: 0.6 }} placeholder="Name (optional)" value={addName}
-                onChange={e => setAddName(e.target.value)} />
-              <input style={cInp} type="email" placeholder="email@company.com" value={addEmail}
-                onChange={e => setAddEmail(e.target.value)}
-                onKeyDown={e => { if (e.key === 'Enter') addContact(); }} />
-              <select style={cSel} value={addType} onChange={e => setAddType(e.target.value)}>
-                <option value="receiver">Receiver</option>
-                <option value="sender">Sender</option>
-              </select>
-              <button onClick={addContact} style={{
-                background: 'var(--blue)', color: '#fff', border: 'none', padding: '9px 16px',
-                borderRadius: 'var(--rs)', fontSize: 12, fontWeight: 600, cursor: 'pointer', whiteSpace: 'nowrap',
-              }}>+ Add</button>
-            </div>
-
-            {/* List */}
-            <div style={{ maxHeight: 220, overflowY: 'auto' }}>
-              {contacts.length === 0 && (
-                <div style={{ textAlign: 'center', padding: 24, fontSize: 11, color: 'var(--t3)' }}>No contacts added yet.</div>
-              )}
-
-              {senders.length > 0 && (
-                <>
-                  <div style={{ fontSize: 10, fontWeight: 600, color: 'var(--t3)', padding: '6px 4px 4px', textTransform: 'uppercase', letterSpacing: 0.6 }}>Senders (From)</div>
-                  {senders.map(c => (
-                    <div key={c.id} style={{
-                      display: 'flex', alignItems: 'center', gap: 10, padding: '8px 12px',
-                      background: 'var(--bg)', border: '1px solid var(--bdr)', borderRadius: 'var(--rs)',
-                      marginBottom: 6, transition: 'all 0.15s',
-                    }}>
-                      <span style={{ fontSize: 9, fontWeight: 600, padding: '2px 7px', borderRadius: 4, textTransform: 'uppercase', letterSpacing: 0.4, background: 'var(--amber-d)', color: 'var(--amber)' }}>Sender</span>
-                      <span style={{ fontSize: 11, color: 'var(--t2)', width: 120, flexShrink: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{c.name}</span>
-                      <span style={{ fontFamily: 'var(--mono)', fontSize: 11, fontWeight: 500, flex: 1, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{c.email}</span>
-                      <span style={{ fontSize: 10, color: 'var(--t3)', fontFamily: 'var(--mono)' }}>FROM</span>
-                      <button onClick={() => removeContact(c.id)} style={{
-                        width: 24, height: 24, display: 'flex', alignItems: 'center', justifyContent: 'center',
-                        borderRadius: 4, cursor: 'pointer', color: 'var(--t3)', fontSize: 13, background: 'none', border: 'none',
-                      }}
-                        onMouseEnter={e => { e.currentTarget.style.background = 'var(--red-d)'; e.currentTarget.style.color = 'var(--red)'; }}
-                        onMouseLeave={e => { e.currentTarget.style.background = 'none'; e.currentTarget.style.color = 'var(--t3)'; }}
-                      ><X size={12} /></button>
-                    </div>
-                  ))}
-                </>
-              )}
-
-              {receivers.length > 0 && (
-                <>
-                  <div style={{ fontSize: 10, fontWeight: 600, color: 'var(--t3)', padding: '10px 4px 4px', textTransform: 'uppercase', letterSpacing: 0.6 }}>Receivers</div>
-                  {receivers.map(c => {
-                    const rc = roleColors[c.role] || roleColors.none;
-                    return (
-                      <div key={c.id} style={{
-                        display: 'flex', alignItems: 'center', gap: 10, padding: '8px 12px',
-                        background: 'var(--bg)', border: '1px solid var(--bdr)', borderRadius: 'var(--rs)',
-                        marginBottom: 6,
-                      }}>
-                        <span style={{ fontSize: 9, fontWeight: 600, padding: '2px 7px', borderRadius: 4, textTransform: 'uppercase', letterSpacing: 0.4, background: 'var(--cyan-d)', color: 'var(--cyan)' }}>Receiver</span>
-                        <span style={{ fontSize: 11, color: 'var(--t2)', width: 120, flexShrink: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{c.name}</span>
-                        <span style={{ fontFamily: 'var(--mono)', fontSize: 11, fontWeight: 500, flex: 1, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{c.email}</span>
-                        <select value={c.role} onChange={e => changeRole(c.id, e.target.value)}
-                          style={{
-                            background: rc.bg, color: rc.color, border: `1px solid ${rc.bdr}`,
-                            borderRadius: 4, padding: '4px 8px', fontFamily: 'var(--sans)', fontSize: 10,
-                            outline: 'none', cursor: 'pointer', minWidth: 58, textAlign: 'center',
-                          }}>
-                          <option value="to">TO</option>
-                          <option value="cc">CC</option>
-                          <option value="bcc">BCC</option>
-                          <option value="none">None</option>
-                        </select>
-                        <button onClick={() => removeContact(c.id)} style={{
-                          width: 24, height: 24, display: 'flex', alignItems: 'center', justifyContent: 'center',
-                          borderRadius: 4, cursor: 'pointer', color: 'var(--t3)', fontSize: 13, background: 'none', border: 'none',
-                        }}
-                          onMouseEnter={e => { e.currentTarget.style.background = 'var(--red-d)'; e.currentTarget.style.color = 'var(--red)'; }}
-                          onMouseLeave={e => { e.currentTarget.style.background = 'none'; e.currentTarget.style.color = 'var(--t3)'; }}
-                        ><X size={12} /></button>
-                      </div>
-                    );
-                  })}
-                </>
-              )}
-            </div>
+        {/* ═══ Owner Info Panel — Hierarchical ═══ */}
+        <div className="anim d0" style={{ ...pnl, marginBottom: 14, background: 'var(--card)' }}>
+          <div style={pnlT}><Shield size={14} color="var(--green)" /> Ownership Hierarchy</div>
+          <div style={pnlSub}>Responsible owners for the current scope: <strong style={{ color: 'var(--t1)' }}>{contextName}</strong></div>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 0 }}>
+            {/* Build chain: always start with team, then project if applicable, then schema if applicable */}
+            {[
+              teamOwner && { owner: teamOwner, name: teamNode?.name, label: 'Team', color: 'var(--cyan)', Icon: Users },
+              (nodeType === 'project' || nodeType === 'schema') && projectOwner && { owner: projectOwner, name: projectNode?.name, label: 'Project', color: 'var(--amber)', Icon: FolderOpen },
+              nodeType === 'schema' && schemaOwner && { owner: schemaOwner, name: schemaNode?.name, label: 'Schema', color: '#f472b6', Icon: Database },
+            ].filter(Boolean).map((item, idx, arr) => (
+              <div key={idx}>
+                <div style={{
+                  display: 'flex', alignItems: 'center', gap: 12,
+                  padding: '12px 16px', marginLeft: idx * 28,
+                  background: idx === arr.length - 1 ? 'var(--elev)' : 'var(--bg)',
+                  border: `1px solid ${idx === arr.length - 1 ? item.color + '40' : 'var(--bdr)'}`,
+                  borderRadius: 'var(--rs)',
+                  position: 'relative',
+                }}>
+                  {/* Connector line */}
+                  {idx > 0 && (
+                    <div style={{
+                      position: 'absolute', left: -14, top: -1, width: 14, height: '50%',
+                      borderLeft: '2px solid var(--bdr)', borderBottom: '2px solid var(--bdr)',
+                      borderRadius: '0 0 0 6px',
+                    }} />
+                  )}
+                  {/* Avatar */}
+                  <div style={{
+                    width: 32, height: 32, borderRadius: 8,
+                    background: `${item.color}15`, border: `1px solid ${item.color}30`,
+                    display: 'flex', alignItems: 'center', justifyContent: 'center',
+                    fontSize: 13, fontWeight: 700, color: item.color, flexShrink: 0,
+                  }}>
+                    {item.owner.charAt(0)}
+                  </div>
+                  {/* Info */}
+                  <div style={{ flex: 1 }}>
+                    <div style={{ fontSize: 12, fontWeight: 600, color: 'var(--t1)' }}>{item.owner}</div>
+                    <div style={{ fontSize: 9, color: 'var(--t3)', marginTop: 1 }}>{item.name}</div>
+                  </div>
+                  {/* Badge */}
+                  <div style={{
+                    display: 'flex', alignItems: 'center', gap: 4,
+                    fontSize: 8.5, fontWeight: 700, padding: '3px 8px', borderRadius: 4,
+                    background: `${item.color}12`, color: item.color,
+                    textTransform: 'uppercase', letterSpacing: 0.5,
+                  }}>
+                    <item.Icon size={9} /> {item.label}
+                  </div>
+                </div>
+                {/* Spacing between rows */}
+                {idx < arr.length - 1 && <div style={{ height: 6 }} />}
+              </div>
+            ))}
           </div>
+        </div>
 
-          {/* RIGHT: Email Compose */}
+        {/* ═══ Section 2: Email Compose ═══ */}
+        <div style={{ display: 'grid', gridTemplateColumns: '1fr', gap: 14 }}>
+
+          {/* Email Compose */}
           <div className="anim d3" style={pnl}>
             <div style={pnlT}>✉ Email Template — Format & Content</div>
             <div style={pnlSub}>
@@ -366,13 +368,16 @@ export default function EmailNotificationsPage() {
                     <span key={i} style={{ width: 8, height: 8, borderRadius: '50%', background: c }} />
                   ))}
                   <span style={{ fontSize: 11, color: 'var(--t2)', fontFamily: 'var(--mono)', marginLeft: 8 }}>
-                    Subject: ⚠ Data Quality Alert — {scopeName} — {'{{run_date}}'}
+                    Subject: ⚠ Data Quality Alert — {emailScopeLabel} ({contextLabel}) — {'{{run_date}}'}
                   </span>
                 </div>
                 <div style={{ padding: 20, fontSize: 12, lineHeight: 1.7, color: 'var(--t2)' }}>
                   <div style={{ color: 'var(--t1)', fontWeight: 600, fontSize: 14, marginBottom: 4 }}>Data Quality Alert Report</div>
+                  <div style={{ fontSize: 11, color: 'var(--t3)', marginBottom: 8 }}>
+                    {contextLabel}: <strong style={{ color: contextColor }}>{contextName}</strong> · Owner: <strong style={{ color: 'var(--t1)' }}>{contextOwner || 'Unassigned'}</strong> · Snowflake
+                  </div>
                   <div style={{ fontSize: 11, color: 'var(--t3)', marginBottom: 14 }}>
-                    {scopeName} · Snowflake · Run: <Tag>{'{{run_date}}'}</Tag> at <Tag>{'{{run_time}}'}</Tag> · Duration: <Tag>{'{{duration}}'}</Tag>
+                    Run: <Tag>{'{{run_date}}'}</Tag> at <Tag>{'{{run_time}}'}</Tag> · Duration: <Tag>{'{{duration}}'}</Tag>
                   </div>
 
                   <h3 style={{ color: 'var(--t1)', fontSize: 13, margin: '14px 0 6px' }}>⚑ Threshold Breach Summary</h3>
@@ -406,9 +411,12 @@ export default function EmailNotificationsPage() {
                       <th key={h} style={{ textAlign: 'left', padding: '6px 10px', background: 'var(--elev)', color: 'var(--t3)', fontSize: 9, textTransform: 'uppercase', letterSpacing: 0.5, borderBottom: '1px solid var(--bdr)' }}>{h}</th>
                     ))}</tr></thead>
                     <tbody>
-                      {[1, 2, 3].map(i => (
-                        <tr key={i}><Td>{`{{fail_table_${i}}}`}</Td><Td>{`{{fail_count_${i}}}`}</Td><Td>{`{{fail_sev_${i}}}`}</Td></tr>
+                      {failingTables.slice(0, 3).map((ft, i) => (
+                        <tr key={i}><Td><span style={{ color: 'var(--cyan)', fontWeight: 600 }}>{ft.name}</span></Td><Td>{ft.severity === 'Critical' ? '5+' : ft.severity === 'Error' ? '3–5' : '1–2'} failures</Td><Td><span style={{ color: ft.severity === 'Critical' ? 'var(--red)' : ft.severity === 'Error' ? 'var(--amber)' : 'var(--blue)' }}>{ft.severity}</span></Td></tr>
                       ))}
+                      {failingTables.length === 0 && (
+                        <tr><Td colSpan={3} style={{ textAlign: 'center', color: 'var(--t3)' }}>No failing tables</Td></tr>
+                      )}
                     </tbody>
                   </table>
 
@@ -471,8 +479,8 @@ export default function EmailNotificationsPage() {
                   <strong>Available variables: </strong>
                   {['health_score', 'schema_score', 'dq_score', 'table_score', 'run_date', 'run_time', 'duration',
                     'schema_passed', 'schema_failed', 'dq_passed', 'dq_failed', 'fail_table_1', 'fail_count_1', 'fail_sev_1', 'dashboard_url'].map(v => (
-                    <code key={v} style={{ fontFamily: 'var(--mono)', background: 'var(--blue-d)', color: 'var(--blue)', padding: '1px 5px', borderRadius: 3, fontSize: 9.5, marginRight: 4 }}>{`{{${v}}}`}</code>
-                  ))}
+                      <code key={v} style={{ fontFamily: 'var(--mono)', background: 'var(--blue-d)', color: 'var(--blue)', padding: '1px 5px', borderRadius: 3, fontSize: 9.5, marginRight: 4 }}>{`{{${v}}}`}</code>
+                    ))}
                 </div>
               </div>
             )}

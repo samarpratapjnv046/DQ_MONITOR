@@ -4,7 +4,7 @@ import { useAuth } from '../contexts/AuthContext';
 import { findNode } from '../data/orgStructure';
 import {
   Database, Upload, Server, ChevronRight, ChevronLeft,
-  CheckCircle2, AlertCircle, Link2, Table2, Clock, Zap, Shield, ArrowLeft,
+  CheckCircle2, AlertCircle, Link2, Table2, Clock, Zap, Shield, ArrowLeft, Mail,
   Snowflake, HardDrive, Cloud, Layers, FolderOpen, Loader2, Play, Timer
 } from 'lucide-react';
 
@@ -289,7 +289,7 @@ export default function AttachDatasetPage() {
   const [form, setForm] = useState({
     source: '',
     host: '', port: '', database: '', warehouse: '', role: '', username: '', password: '',
-    projectName: '', schemaName: '', layer: '', tables: '', sampleRows: '10000',
+    projectName: '', projectOwnerEmail: '', schemaName: '', layer: '', tables: '', sampleRows: '10000',
     validationMode: '', // 'custom' or 'mapping'
     customRules: '',
     ruleMappingDone: false,
@@ -310,7 +310,7 @@ export default function AttachDatasetPage() {
       if (form.source === 'csv_upload') return true;
       return form.host && form.database && form.username;
     }
-    if (step === 2) return form.projectName && form.schemaName && form.layer && form.tables;
+    if (step === 2) return form.projectName && form.projectOwnerEmail && /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(form.projectOwnerEmail.trim()) && form.schemaName && form.tables;
     if (step === 3) {
       if (form.validationMode === 'mapping') return form.ruleMappingDone;
       if (form.validationMode === 'custom') return !!form.customRules.trim();
@@ -357,7 +357,6 @@ export default function AttachDatasetPage() {
         }}>
           <div><span style={{ color: 'var(--t3)' }}>Project:</span> <strong>{form.projectName}</strong></div>
           <div><span style={{ color: 'var(--t3)' }}>Schema:</span> <strong>{form.schemaName}</strong></div>
-          <div><span style={{ color: 'var(--t3)' }}>Layer:</span> <strong>{form.layer}</strong></div>
           <div><span style={{ color: 'var(--t3)' }}>Schedule:</span> <strong>{form.scheduleType}</strong></div>
         </div>
         <div style={{ display: 'flex', gap: '10px', marginTop: '8px' }}>
@@ -477,23 +476,73 @@ export default function AttachDatasetPage() {
                   <input style={inputStyle} placeholder="e.g. Q1 2026 Risk Snapshot" value={form.datasetName} onChange={e => u('datasetName', e.target.value)} />
                 </div>
               </div>
-            </div>
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
-              <div><label style={labelStyle}>Schema Name *</label><input style={inputStyle} placeholder="RAW_TRANSACTIONS" value={form.schemaName} onChange={e => u('schemaName', e.target.value)} /></div>
-              <div>
-                <label style={labelStyle}>Layer Classification *</label>
-                <select style={{ ...inputStyle, cursor: 'pointer' }} value={form.layer} onChange={e => u('layer', e.target.value)}>
-                  <option value="">Select layer...</option>
-                  {LAYER_OPTIONS.map(l => <option key={l} value={l}>{l}</option>)}
-                </select>
+              {/* Project Owner Email */}
+              <div style={{ marginTop: 12 }}>
+                <label style={labelStyle}>
+                  <span style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                    <Mail size={11} color="var(--amber)" /> Project Owner Email *
+                  </span>
+                </label>
+                <input
+                  style={{ ...inputStyle, borderColor: form.projectOwnerEmail && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(form.projectOwnerEmail.trim()) ? 'var(--red)' : 'var(--bdr)' }}
+                  placeholder="e.g. projectowner@company.com"
+                  value={form.projectOwnerEmail}
+                  onChange={e => u('projectOwnerEmail', e.target.value)}
+                />
+                <div style={{ fontSize: '9px', color: 'var(--t3)', marginTop: '3px' }}>Email of the project-level owner responsible for this schema</div>
               </div>
             </div>
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr', gap: 12 }}>
+              <div><label style={labelStyle}>Schema Name *</label><input style={inputStyle} placeholder="RAW_TRANSACTIONS" value={form.schemaName} onChange={e => u('schemaName', e.target.value)} /></div>
+            </div>
             <div style={{ marginTop: 12 }}>
-              <label style={labelStyle}>Tables (comma-separated) *</label>
-              <textarea style={{ ...inputStyle, minHeight: 80, resize: 'vertical', fontFamily: 'var(--mono)', fontSize: 11 }}
-                placeholder="DIM_CUSTOMER, FACT_ORDERS, DIM_PRODUCT, ..." value={form.tables} onChange={e => u('tables', e.target.value)} />
-              <div style={{ fontSize: 9, color: 'var(--t3)', marginTop: 4 }}>
-                {form.tables ? `${form.tables.split(',').filter(t => t.trim()).length} tables` : 'Enter table names or * for all'}
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 6 }}>
+                <label style={{ ...labelStyle, marginBottom: 0 }}>Tables *</label>
+                <button
+                  type="button"
+                  onClick={() => {
+                    const SAMPLE = ['DIM_CUSTOMER', 'FACT_ORDERS', 'DIM_PRODUCT', 'FACT_PAYMENTS', 'DIM_REGION', 'FACT_TRANSACTIONS', 'DIM_DATE', 'FACT_REVENUE', 'DIM_ACCOUNT', 'FACT_RISK_SCORES'];
+                    const current = form.tables.split(',').map(t => t.trim()).filter(Boolean);
+                    const allSelected = SAMPLE.every(s => current.includes(s));
+                    u('tables', allSelected ? '' : SAMPLE.join(', '));
+                  }}
+                  style={{
+                    fontSize: 9, fontWeight: 700, padding: '3px 10px', borderRadius: 5,
+                    border: '1px solid var(--bdr)', background: 'var(--elev)', color: 'var(--blue)',
+                    cursor: 'pointer', textTransform: 'uppercase', letterSpacing: 0.4,
+                  }}
+                >
+                  {(() => {
+                    const SAMPLE = ['DIM_CUSTOMER', 'FACT_ORDERS', 'DIM_PRODUCT', 'FACT_PAYMENTS', 'DIM_REGION', 'FACT_TRANSACTIONS', 'DIM_DATE', 'FACT_REVENUE', 'DIM_ACCOUNT', 'FACT_RISK_SCORES'];
+                    const current = form.tables.split(',').map(t => t.trim()).filter(Boolean);
+                    return SAMPLE.every(s => current.includes(s)) ? 'Deselect All' : 'Select All';
+                  })()}
+                </button>
+              </div>
+              <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6, marginBottom: 6 }}>
+                {['DIM_CUSTOMER', 'FACT_ORDERS', 'DIM_PRODUCT', 'FACT_PAYMENTS', 'DIM_REGION', 'FACT_TRANSACTIONS', 'DIM_DATE', 'FACT_REVENUE', 'DIM_ACCOUNT', 'FACT_RISK_SCORES'].map(tbl => {
+                  const current = form.tables.split(',').map(t => t.trim()).filter(Boolean);
+                  const selected = current.includes(tbl);
+                  return (
+                    <div key={tbl} onClick={() => {
+                      const next = selected ? current.filter(t => t !== tbl) : [...current, tbl];
+                      u('tables', next.join(', '));
+                    }} style={{
+                      fontSize: 10, fontFamily: 'var(--mono)', fontWeight: 600,
+                      padding: '6px 12px', borderRadius: 6, cursor: 'pointer',
+                      background: selected ? 'rgba(52,211,153,0.12)' : 'var(--elev)',
+                      border: `1.5px solid ${selected ? 'var(--green)' : 'var(--bdr)'}`,
+                      color: selected ? 'var(--green)' : 'var(--t3)',
+                      transition: 'all 0.15s', display: 'flex', alignItems: 'center', gap: 5,
+                    }}>
+                      {selected && <CheckCircle2 size={10} />}
+                      {tbl}
+                    </div>
+                  );
+                })}
+              </div>
+              <div style={{ fontSize: 9, color: 'var(--t3)' }}>
+                {form.tables ? `${form.tables.split(',').filter(t => t.trim()).length} tables selected` : 'Click tables to select or use Select All'}
               </div>
             </div>
             <div style={{ marginTop: 12 }}>
@@ -723,14 +772,13 @@ export default function AttachDatasetPage() {
         const tblCount = form.tables.split(',').filter(t => t.trim()).length;
         const schedDesc = form.scheduleType === 'daily' ? `Daily at ${TIME_SLOTS.find(t => t.value === form.schedTime)?.label}`
           : form.scheduleType === 'weekly' ? `Every ${form.schedDay} at ${TIME_SLOTS.find(t => t.value === form.schedTime)?.label}`
-          : form.scheduleType === 'monthly' ? `${form.schedWeek}, ${form.schedDay} at ${TIME_SLOTS.find(t => t.value === form.schedTime)?.label}`
-          : 'Manual trigger';
+            : form.scheduleType === 'monthly' ? `${form.schedWeek}, ${form.schedDay} at ${TIME_SLOTS.find(t => t.value === form.schedTime)?.label}`
+              : 'Manual trigger';
         const items = [
           { label: 'Data Source', value: src?.name, color: src?.color },
           { label: 'Host', value: form.host || 'File Upload' },
           { label: 'Project', value: form.projectName },
           { label: 'Schema', value: form.schemaName },
-          { label: 'Layer', value: form.layer },
           { label: 'Tables', value: `${tblCount} table${tblCount !== 1 ? 's' : ''}` },
           { label: 'Validation', value: form.validationMode === 'custom' ? 'Custom Rules' : 'Auto Rule Mapping' },
           { label: 'Schedule', value: schedDesc },
@@ -795,7 +843,7 @@ export default function AttachDatasetPage() {
         <div>
           <span style={{ fontSize: 13, fontWeight: 600 }}>Attach New Dataset</span>
           <span style={{ fontSize: 10, color: 'var(--t3)', marginLeft: 8 }}>
-            to {node.name} (Team)
+            to {node.name} ({node.type === 'bu' ? 'Business Unit' : node.type.charAt(0).toUpperCase() + node.type.slice(1)})
           </span>
         </div>
       </div>
@@ -855,7 +903,7 @@ export default function AttachDatasetPage() {
               </button>
             ) : (
               <button onClick={() => setSubmitted(true)} style={btnPrimary}>
-                <Zap size={14} /> Attach Dataset & Start Monitoring
+                <Zap size={14} /> Start Monitoring
               </button>
             )}
           </div>
