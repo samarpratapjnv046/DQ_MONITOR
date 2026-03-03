@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
-import { findNode } from '../data/orgStructure';
+import { findNode, addProjectToNode } from '../data/orgStructure';
 import {
     FolderOpen, ArrowLeft, CheckCircle2, AlertCircle, User, Calendar,
     Star, FileText, Layers, Mail
@@ -34,7 +34,7 @@ const btnSecondary = {
 
 export default function CreateProjectPage() {
     const { '*': pathParam } = useParams();
-    const { user } = useAuth();
+    const { user, refreshTree } = useAuth();
     const navigate = useNavigate();
 
     const segments = pathParam?.replace('create-project/', '').split('/').filter(Boolean) || user.scopePath;
@@ -76,6 +76,15 @@ export default function CreateProjectPage() {
             return;
         }
         setErrors({});
+
+        // Mutate the live org tree to add the new project
+        addProjectToNode(segments, {
+            projectName: form.projectName.trim(),
+            ownerName: form.ownerName.trim(),
+            starName: form.starName.trim(),
+        });
+        refreshTree(); // Force sidebar re-render
+
         setSubmitted(true);
     };
 

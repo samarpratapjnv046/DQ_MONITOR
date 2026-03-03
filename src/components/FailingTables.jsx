@@ -20,15 +20,15 @@ export default function FailingTables({ metrics: m, node }) {
     }}>
       <div style={{ fontSize: '11.5px', fontWeight: 600, marginBottom: '10px', display: 'flex', alignItems: 'center', gap: '7px', flexShrink: 0 }}>
         <span style={{ fontSize: '13px' }}>⚑</span>
-        Top {label} Failures — Sorted by Failure Rate
+        Top {label} Validation Failures — Sorted by Failure Rate
       </div>
       <div style={{ flex: 1, overflowY: 'auto' }}>
         <table style={{ width: '100%', borderCollapse: 'separate', borderSpacing: 0 }}>
           <thead>
             <tr>
               {isTableView
-                ? ['Table', 'Failure %', 'Severity'].map(h => <th key={h} style={thStyle}>{h}</th>)
-                : [label, 'Failure %', 'Severity', 'Health', 'Pass Rate'].map(h => <th key={h} style={thStyle}>{h}</th>)
+                ? ['Table', 'Validation Failure %', 'Severity', 'Health Score'].map(h => <th key={h} style={thStyle}>{h}</th>)
+                : [label, 'Validation Failure %', 'Severity', 'Health Score'].map(h => <th key={h} style={thStyle}>{h}</th>)
               }
             </tr>
           </thead>
@@ -57,6 +57,18 @@ export default function FailingTables({ metrics: m, node }) {
                     <td style={tdStyle}>
                       <span style={{ ...badgeStyle, background: sev.bg, color: sev.color }}>{t.severity}</span>
                     </td>
+                    <td style={tdStyle}>
+                      {(() => {
+                        const hs = t.healthScore || 0;
+                        const hsColor = hs >= 90 ? 'var(--green)' : hs >= 80 ? 'var(--amber)' : 'var(--red)';
+                        const hsBg = hs >= 90 ? 'rgba(52,211,153,0.12)' : hs >= 80 ? 'rgba(251,191,36,0.12)' : 'rgba(248,113,113,0.12)';
+                        return (
+                          <span style={{ ...badgeStyle, background: hsBg, color: hsColor }}>
+                            {hs}%
+                          </span>
+                        );
+                      })()}
+                    </td>
                   </tr>
                 );
               }
@@ -75,11 +87,17 @@ export default function FailingTables({ metrics: m, node }) {
                   <td style={tdStyle}>
                     <span style={{ ...badgeStyle, background: sev.bg, color: sev.color }}>{t.severity}</span>
                   </td>
-                  <td style={{ ...tdStyle, fontFamily: 'var(--mono)', fontSize: '11px', fontWeight: 600, color: 'var(--green)' }}>
-                    {t.healthScore}%
-                  </td>
-                  <td style={{ ...tdStyle, fontFamily: 'var(--mono)', fontSize: '11px', fontWeight: 600, color: 'var(--blue)' }}>
-                    {t.passRate}%
+                  <td style={tdStyle}>
+                    {(() => {
+                      const hs = t.healthScore || 0;
+                      const hsColor = hs >= 90 ? 'var(--green)' : hs >= 80 ? 'var(--amber)' : 'var(--red)';
+                      const hsBg = hs >= 90 ? 'rgba(52,211,153,0.12)' : hs >= 80 ? 'rgba(251,191,36,0.12)' : 'rgba(248,113,113,0.12)';
+                      return (
+                        <span style={{ ...badgeStyle, background: hsBg, color: hsColor }}>
+                          {hs}%
+                        </span>
+                      );
+                    })()}
                   </td>
                 </tr>
               );

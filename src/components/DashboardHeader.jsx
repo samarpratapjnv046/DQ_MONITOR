@@ -66,13 +66,22 @@ export default function DashboardHeader({ node, typeLabel, onRefresh }) {
               }}>
                 <User size={9} /> Owner: {node.owner}
               </span>
-              {node.users && node.users.length > 0 && (
+              {node.dataSteward && (
+                <span style={{
+                  display: 'inline-flex', alignItems: 'center', gap: '4px',
+                  fontSize: '9px', fontWeight: 600, padding: '2px 8px', borderRadius: '4px',
+                  background: 'rgba(251,191,36,0.1)', color: '#FBBF24',
+                }}>
+                  <User size={9} /> Data Steward: {node.dataSteward}
+                </span>
+              )}
+              {node.upstreamDownstreamUsers && node.upstreamDownstreamUsers.length > 0 && (
                 <span style={{
                   display: 'inline-flex', alignItems: 'center', gap: '4px',
                   fontSize: '9px', fontWeight: 600, padding: '2px 8px', borderRadius: '4px',
                   background: 'rgba(34,211,238,0.1)', color: '#22D3EE',
                 }}>
-                  <User size={9} /> Users: {node.users.join(', ')}
+                  <User size={9} /> Upstream/Downstream Users: {node.upstreamDownstreamUsers.join(', ')}
                 </span>
               )}
               {node.createdAt && (

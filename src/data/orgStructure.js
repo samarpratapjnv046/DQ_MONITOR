@@ -81,6 +81,7 @@ const generateTableMetrics = (tableName, layer) => {
 // ── Owner name pools ──
 const SCHEMA_OWNERS = ['Arun Patel', 'Meera Joshi', 'Vikram Nair', 'Priya Reddy', 'Deepak Sharma', 'Kavya Menon', 'Suresh Iyer', 'Nisha Gupta', 'Rohit Bhat', 'Arjun Das'];
 const SCHEMA_USERS_POOL = ['Rahul Singh', 'Anjali Desai', 'Kiran Rao', 'Pooja Thakur', 'Nikhil Verma', 'Swati Kulkarni', 'Manish Tiwari', 'Divya Pillai', 'Amit Saxena', 'Sonal Mishra', 'Tarun Chopra', 'Rekha Pandey'];
+const DATA_STEWARDS = ['Ananya Nair', 'Siddharth Rao', 'Megha Kulkarni', 'Harsh Vardhan', 'Poornima Das', 'Rajiv Menon', 'Sneha Bhat', 'Tarun Prasad', 'Isha Sharma', 'Kunal Joshi'];
 const SCHEMA_DATES = ['Jan 5, 2026 · 10:30 AM', 'Jan 12, 2026 · 2:15 PM', 'Jan 18, 2026 · 9:45 AM', 'Jan 24, 2026 · 11:00 AM', 'Feb 1, 2026 · 3:20 PM', 'Feb 6, 2026 · 8:50 AM'];
 let _schemaIdx = 0;
 
@@ -142,6 +143,7 @@ const generateSchemaMetrics = (schemaName, displayName, layer, tableNames) => {
   const skippedCols = Math.floor(failingCols * rng(0.3, 0.6));
 
   const schemaOwner = SCHEMA_OWNERS[_schemaIdx % SCHEMA_OWNERS.length];
+  const schemaSteward = DATA_STEWARDS[_schemaIdx % DATA_STEWARDS.length];
   const numUsers = 2 + Math.floor(rng(0, 3));
   const schemaUsers = [];
   for (let u = 0; u < numUsers; u++) {
@@ -150,9 +152,13 @@ const generateSchemaMetrics = (schemaName, displayName, layer, tableNames) => {
   const schemaCreated = SCHEMA_DATES[_schemaIdx % SCHEMA_DATES.length];
   _schemaIdx++;
 
+  // Health tier: 1 (low) to 3 (high) based on overall health score
+  const healthTier = overallHealth >= 90 ? 3 : overallHealth >= 80 ? 2 : 1;
+
   return {
     id: schemaName, name: displayName, type: 'schema', tables,
-    owner: schemaOwner, users: schemaUsers, createdAt: schemaCreated,
+    owner: schemaOwner, dataSteward: schemaSteward, upstreamDownstreamUsers: schemaUsers, createdAt: schemaCreated,
+    healthTier,
     metrics: {
       healthScore: overallHealth, passRate, coverage: 100,
       failedRate: totalRules > 0 ? parseFloat(((totalFail / totalRules) * 100).toFixed(2)) : 0,
@@ -403,17 +409,19 @@ organization.metrics = aggregateMetrics([bfsi, cpg]);
 // ══════════════════════════════════════════════════════════════
 export const getNextLevelFailures = (node) => {
   if (!node.children || node.children.length === 0) {
-    return { label: 'Table', items: (node.metrics?.failingTables || []).map(t => ({ name: t.name, failureRate: t.failureRate, severity: t.severity, skips: t.skips, type: 'table' })) };
+    return { label: 'Table', items: (node.metrics?.failingTables || []).map(t => ({ name: t.name, failureRate: t.failureRate, severity: t.severity, skips: t.skips, healthScore: parseFloat((100 - t.failureRate).toFixed(1)), type: 'table' })) };
   }
   const childType = node.children[0].type;
   const labels = { domain: 'Domain', bu: 'Business Unit', team: 'Team', project: 'Project', schema: 'Schema' };
   const rawItems = node.children.filter(c => c.metrics).map(c => {
     const m = c.metrics;
+    const tier = c.healthTier || (m.healthScore >= 90 ? 3 : m.healthScore >= 80 ? 2 : 1);
     return {
       name: c.name, failureRate: m.failedRate || 0,
       severity: m.failedRate > 5 ? 'Critical' : m.failedRate > 2 ? 'Error' : m.failedRate > 0 ? 'Warning' : 'Pass',
       healthScore: m.healthScore, passRate: m.passRate,
       totalFail: m.totalFail, totalRules: m.totalRules,
+      healthTier: tier,
       type: childType,
     };
   }).sort((a, b) => b.failureRate - a.failureRate).slice(0, 10);
@@ -516,6 +524,106 @@ export const getAncestorChain = (scopePath) => {
     current = child;
   }
   return ancestors;
+};
+
+// ══════════════════════════════════════════════════════════════
+// DYNAMIC TREE MUTATION HELPERS
+// ══════════════════════════════════════════════════════════════
+
+/**
+ * Add a new project node to the team node at the given path.
+ * Re-aggregates parent metrics after insertion.
+ */
+export const addProjectToNode = (teamPath, { projectName, ownerName, starName }) => {
+  const teamNode = findNode(teamPath);
+  if (!teamNode) return null;
+
+  const id = projectName.toLowerCase().replace(/\s+/g, '_');
+  // Check if project already exists
+  if (teamNode.children?.find(c => c.id === id)) return teamNode.children.find(c => c.id === id);
+
+  const newProject = {
+    id,
+    name: projectName,
+    starName: starName || '',
+    type: 'project',
+    owner: ownerName,
+    children: [],
+    metrics: null,
+  };
+
+  if (!teamNode.children) teamNode.children = [];
+  teamNode.children.push(newProject);
+
+  // Re-aggregate metrics up the chain
+  reAggregateFromPath(teamPath);
+
+  return newProject;
+};
+
+/**
+ * Add a new schema node to a project under the given path.
+ * If the project doesn't exist, creates it first.
+ * Re-aggregates parent metrics after insertion.
+ */
+export const addSchemaToNode = (basePath, { projectName, projectOwnerEmail, schemaName, tables }) => {
+  // basePath points to where the attach form was opened (could be project or team)
+  const baseNode = findNode(basePath);
+  if (!baseNode) return null;
+
+  let projectNode;
+  let projectPath;
+
+  if (baseNode.type === 'project') {
+    projectNode = baseNode;
+    projectPath = [...basePath];
+  } else {
+    // Try to find or create the project under this node
+    const projectId = projectName.toLowerCase().replace(/\s+/g, '_');
+    projectNode = baseNode.children?.find(c => c.id === projectId);
+    if (!projectNode) {
+      projectNode = addProjectToNode(basePath, { projectName, ownerName: projectOwnerEmail, starName: '' });
+    }
+    projectPath = [...basePath, projectNode.id];
+  }
+
+  if (!projectNode) return null;
+
+  const schemaId = schemaName.toLowerCase().replace(/[\s\-]+/g, '_');
+  // Check if schema already exists
+  if (projectNode.children?.find(c => c.id === schemaId)) return projectNode.children.find(c => c.id === schemaId);
+
+  // Parse tables
+  const tableNames = tables
+    ? tables.split(',').map(t => t.trim()).filter(Boolean)
+    : ['TABLE_1', 'TABLE_2', 'TABLE_3'];
+
+  // Generate a proper schema with metrics
+  const newSchema = generateSchemaMetrics(schemaId, schemaName, 'bronze', tableNames);
+  newSchema.owner = projectOwnerEmail;
+
+  if (!projectNode.children) projectNode.children = [];
+  projectNode.children.push(newSchema);
+
+  // Re-aggregate metrics from the project up
+  projectNode.metrics = aggregateMetrics(projectNode.children);
+  reAggregateFromPath(projectPath.slice(0, -1)); // re-aggregate from parent of project
+
+  return newSchema;
+};
+
+/**
+ * Walk up from the given path re-aggregating metrics at each level.
+ */
+const reAggregateFromPath = (path) => {
+  // Re-aggregate from the deepest to the shallowest
+  for (let i = path.length; i >= 0; i--) {
+    const subPath = path.slice(0, i);
+    const node = subPath.length === 0 ? organization : findNode(subPath);
+    if (node && node.children) {
+      node.metrics = aggregateMetrics(node.children);
+    }
+  }
 };
 
 export default organization;

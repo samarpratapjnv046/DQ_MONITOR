@@ -419,10 +419,10 @@ function AncestorItem({ node, isLast }) {
 // ══════════════════════════════════════════════════════════════
 
 export default function Sidebar() {
-  const { user, logout, getTree } = useAuth();
+  const { user, logout, getTree, treeVersion } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
-  const tree = useMemo(() => getTree(), [getTree]);
+  const tree = useMemo(() => getTree(), [getTree, treeVersion]);
   const [deleteTarget, setDeleteTarget] = useState(null);
   const [theme, setTheme] = useState(() => localStorage.getItem('dq_theme') || 'dark');
   const [toast, setToast] = useState({ msg: '', type: '', visible: false });

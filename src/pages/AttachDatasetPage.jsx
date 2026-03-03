@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
-import { findNode } from '../data/orgStructure';
+import { findNode, addSchemaToNode } from '../data/orgStructure';
 import {
   Database, Upload, Server, ChevronRight, ChevronLeft,
   CheckCircle2, AlertCircle, Link2, Table2, Clock, Zap, Shield, ArrowLeft, Mail,
@@ -279,7 +279,7 @@ function ManualApplyButton({ onApply }) {
 
 export default function AttachDatasetPage() {
   const { '*': pathParam } = useParams();
-  const { user } = useAuth();
+  const { user, refreshTree } = useAuth();
   const navigate = useNavigate();
 
   const segments = pathParam?.replace('attach/', '').split('/').filter(Boolean) || user.scopePath;
@@ -289,7 +289,7 @@ export default function AttachDatasetPage() {
   const [form, setForm] = useState({
     source: '',
     host: '', port: '', database: '', warehouse: '', role: '', username: '', password: '',
-    projectName: '', projectOwnerEmail: '', schemaName: '', layer: '', tables: '', sampleRows: '10000',
+    projectName: '', projectOwnerEmail: user?.email || '', schemaName: '', layer: '', tables: '', sampleRows: '10000',
     validationMode: '', // 'custom' or 'mapping'
     customRules: '',
     ruleMappingDone: false,
@@ -310,10 +310,10 @@ export default function AttachDatasetPage() {
       if (form.source === 'csv_upload') return true;
       return form.host && form.database && form.username;
     }
-    if (step === 2) return form.projectName && form.projectOwnerEmail && /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(form.projectOwnerEmail.trim()) && form.schemaName && form.tables;
+    if (step === 2) return form.projectOwnerEmail && /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(form.projectOwnerEmail.trim()) && form.schemaName && form.tables;
     if (step === 3) {
       if (form.validationMode === 'mapping') return form.ruleMappingDone;
-      if (form.validationMode === 'custom') return !!form.customRules.trim();
+      if (form.validationMode === 'custom') return true; // Custom rules are optional
       return false;
     }
     if (step === 4) {
@@ -347,15 +347,14 @@ export default function AttachDatasetPage() {
         </div>
         <div style={{ fontSize: '20px', fontWeight: 700, color: 'var(--t1)' }}>Dataset Attached Successfully</div>
         <div style={{ fontSize: '12px', color: 'var(--t2)', textAlign: 'center', maxWidth: '420px', lineHeight: 1.7 }}>
-          <strong style={{ color: 'var(--t1)' }}>{form.datasetName || form.schemaName}</strong> has been attached to
-          project <strong style={{ color: 'var(--t1)' }}>{form.projectName}</strong> under{' '}
-          <strong style={{ color: 'var(--t1)' }}>{node.name}</strong> via {src?.name}.
+          <strong style={{ color: 'var(--t1)' }}>{form.schemaName}</strong> has been attached to
+          project <strong style={{ color: 'var(--t1)' }}>{node.name}</strong> via {src?.name}.
         </div>
         <div style={{
           background: 'var(--card)', border: '1px solid var(--bdr)', borderRadius: '12px',
           padding: '16px 24px', display: 'flex', gap: '28px', fontSize: '11px',
         }}>
-          <div><span style={{ color: 'var(--t3)' }}>Project:</span> <strong>{form.projectName}</strong></div>
+          <div><span style={{ color: 'var(--t3)' }}>Project:</span> <strong>{node.name}</strong></div>
           <div><span style={{ color: 'var(--t3)' }}>Schema:</span> <strong>{form.schemaName}</strong></div>
           <div><span style={{ color: 'var(--t3)' }}>Schedule:</span> <strong>{form.scheduleType}</strong></div>
         </div>
@@ -452,44 +451,34 @@ export default function AttachDatasetPage() {
           </div>
         );
 
-      // ── STEP 3: Schema & Tables (with Project assignment) ──
+      // ── STEP 3: Schema & Tables ──
       case 'schema':
         return (
           <div>
-            <div style={{ fontSize: '13px', fontWeight: 600, marginBottom: '4px' }}>Project, Schema & Table Selection</div>
+            <div style={{ fontSize: '13px', fontWeight: 600, marginBottom: '4px' }}>Schema & Table Selection</div>
             <div style={{ fontSize: '11px', color: 'var(--t3)', marginBottom: '16px' }}>
-              Assign to a project and specify which schema/tables to validate
+              Specify which schema and tables to validate in <strong style={{ color: 'var(--t1)' }}>{node.name}</strong>
             </div>
-            {/* Project assignment */}
+            {/* Project Custodian */}
             <div style={{ marginBottom: 14, padding: '14px 16px', borderRadius: 10, background: 'var(--card)', border: '1px solid var(--bdr)' }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 10 }}>
                 <FolderOpen size={14} color="var(--amber)" />
-                <span style={{ fontSize: '12px', fontWeight: 700, color: 'var(--t1)' }}>Project Assignment</span>
+                <span style={{ fontSize: '12px', fontWeight: 700, color: 'var(--t1)' }}>Project: {node.name}</span>
               </div>
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
-                <div>
-                  <label style={labelStyle}>Project Name *</label>
-                  <input style={inputStyle} placeholder="e.g. PD Model Retail Mortgage" value={form.projectName} onChange={e => u('projectName', e.target.value)} />
-                </div>
-                <div>
-                  <label style={labelStyle}>Dataset Display Name</label>
-                  <input style={inputStyle} placeholder="e.g. Q1 2026 Risk Snapshot" value={form.datasetName} onChange={e => u('datasetName', e.target.value)} />
-                </div>
-              </div>
-              {/* Project Owner Email */}
-              <div style={{ marginTop: 12 }}>
+              {/* Project Custodian Email */}
+              <div>
                 <label style={labelStyle}>
                   <span style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-                    <Mail size={11} color="var(--amber)" /> Project Owner Email *
+                    <Mail size={11} color="var(--amber)" /> Project Custodian Email *
                   </span>
                 </label>
                 <input
                   style={{ ...inputStyle, borderColor: form.projectOwnerEmail && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(form.projectOwnerEmail.trim()) ? 'var(--red)' : 'var(--bdr)' }}
-                  placeholder="e.g. projectowner@company.com"
+                  placeholder="e.g. custodian@company.com"
                   value={form.projectOwnerEmail}
                   onChange={e => u('projectOwnerEmail', e.target.value)}
                 />
-                <div style={{ fontSize: '9px', color: 'var(--t3)', marginTop: '3px' }}>Email of the project-level owner responsible for this schema</div>
+                <div style={{ fontSize: '9px', color: 'var(--t3)', marginTop: '3px' }}>Email of the project custodian responsible for this schema</div>
               </div>
             </div>
             <div style={{ display: 'grid', gridTemplateColumns: '1fr', gap: 12 }}>
@@ -574,7 +563,7 @@ export default function AttachDatasetPage() {
                   <div style={{ width: 48, height: 48, borderRadius: 14, margin: '0 auto 12px', background: 'rgba(251,191,36,0.1)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
                     <FileEdit size={22} color="var(--amber)" />
                   </div>
-                  <div style={{ fontSize: 13, fontWeight: 700, color: 'var(--t1)', marginBottom: 6 }}>Custom Rules</div>
+                  <div style={{ fontSize: 13, fontWeight: 700, color: 'var(--t1)', marginBottom: 6 }}>Custom Rules <span style={{ fontSize: 9, fontWeight: 500, color: 'var(--t3)' }}>(Optional)</span></div>
                   <div style={{ fontSize: 10, color: 'var(--t3)', lineHeight: 1.6 }}>
                     Write your own validation rules in YAML/JSON. Full control over checks, thresholds, and conditions.
                   </div>
@@ -589,7 +578,7 @@ export default function AttachDatasetPage() {
                   <div style={{ width: 48, height: 48, borderRadius: 14, margin: '0 auto 12px', background: 'rgba(96,165,250,0.1)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
                     <Zap size={22} color="var(--blue)" />
                   </div>
-                  <div style={{ fontSize: 13, fontWeight: 700, color: 'var(--t1)', marginBottom: 6 }}>Rule Mapping</div>
+                  <div style={{ fontSize: 13, fontWeight: 700, color: 'var(--t1)', marginBottom: 6 }}>Rule Mapping <span style={{ fontSize: 9, fontWeight: 500, color: 'var(--red)' }}>(Required)</span></div>
                   <div style={{ fontSize: 10, color: 'var(--t3)', lineHeight: 1.6 }}>
                     Auto-scan your data and generate validation rules. Profiles distributions, types, and patterns automatically.
                   </div>
@@ -777,10 +766,11 @@ export default function AttachDatasetPage() {
         const items = [
           { label: 'Data Source', value: src?.name, color: src?.color },
           { label: 'Host', value: form.host || 'File Upload' },
-          { label: 'Project', value: form.projectName },
+          { label: 'Project', value: node.name },
+          { label: 'Custodian Email', value: form.projectOwnerEmail },
           { label: 'Schema', value: form.schemaName },
           { label: 'Tables', value: `${tblCount} table${tblCount !== 1 ? 's' : ''}` },
-          { label: 'Validation', value: form.validationMode === 'custom' ? 'Custom Rules' : 'Auto Rule Mapping' },
+          { label: 'Validation', value: form.validationMode === 'custom' ? 'Custom Rules (Optional)' : 'Auto Rule Mapping' },
           { label: 'Schedule', value: schedDesc },
           { label: 'Alert Email', value: form.alertEmail || '—' },
         ];
@@ -892,7 +882,14 @@ export default function AttachDatasetPage() {
               <ChevronLeft size={14} /> Previous
             </button>
             {step < STEPS.length - 1 ? (
-              <button onClick={() => setStep(s => s + 1)}
+              <button onClick={() => {
+                // If custom rules selected, switch to rule mapping mode within the same step
+                if (step === 3 && form.validationMode === 'custom') {
+                  u('validationMode', 'mapping');
+                  return;
+                }
+                setStep(s => s + 1);
+              }}
                 disabled={!canAdvance() || hideNextOnSchedule}
                 style={{
                   ...btnPrimary,
@@ -902,7 +899,17 @@ export default function AttachDatasetPage() {
                 Next <ChevronRight size={14} />
               </button>
             ) : (
-              <button onClick={() => setSubmitted(true)} style={btnPrimary}>
+              <button onClick={() => {
+                // Mutate the live org tree to add the new schema
+                addSchemaToNode(segments, {
+                  projectName: node.name,
+                  projectOwnerEmail: form.projectOwnerEmail.trim(),
+                  schemaName: form.schemaName.trim(),
+                  tables: form.tables,
+                });
+                refreshTree(); // Force sidebar re-render
+                setSubmitted(true);
+              }} style={btnPrimary}>
                 <Zap size={14} /> Start Monitoring
               </button>
             )}

@@ -3,7 +3,7 @@ import { useNavigate, useParams } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import { findNode } from '../data/orgStructure';
 import organization from '../data/orgStructure';
-import { ArrowLeft, Search, Download, Building2, Globe, Briefcase, Users, FolderOpen, Database, Table2, ChevronRight, Shield, ArrowUpRight, ArrowDownRight } from 'lucide-react';
+import { ArrowLeft, Search, Download, Building2, Globe, Briefcase, Users, FolderOpen, Database, Table2, ChevronRight } from 'lucide-react';
 
 // ══════════════════════════════════════════════════════════════
 // DATA GENERATORS — deterministic from schema tables/columns
@@ -332,19 +332,12 @@ export default function TableDetailPage() {
           // Add the table itself
           hierItems.push({ name: tableName, type: 'table', icon: Table2, color: 'var(--cyan)' });
 
-          // Data Steward — use schema owner
-          const dataSteward = node?.owner || 'Unassigned';
-
-          // Upstream / Downstream users from schema
-          const upstreamUsers = node?.users?.slice(0, Math.ceil((node?.users?.length || 0) / 2)) || [];
-          const downstreamUsers = node?.users?.slice(Math.ceil((node?.users?.length || 0) / 2)) || [];
-
           return (
             <div className="anim d1" style={{ marginBottom: 14 }}>
               {/* Hierarchy row */}
               <div style={{
                 background: 'var(--card)', border: '1px solid var(--bdr)', borderRadius: 'var(--r)',
-                padding: '14px 18px', marginBottom: 10,
+                padding: '14px 18px',
               }}>
                 <div style={{ fontSize: 9, fontWeight: 600, textTransform: 'uppercase', letterSpacing: 0.7, color: 'var(--t3)', marginBottom: 10, display: 'flex', alignItems: 'center', gap: 5 }}>
                   <Building2 size={10} /> Full Hierarchy Path
@@ -377,80 +370,6 @@ export default function TableDetailPage() {
                       </div>
                     );
                   })}
-                </div>
-              </div>
-
-              {/* Metadata row: Data Steward + Upstream/Downstream */}
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 10 }}>
-                {/* Data Steward */}
-                <div style={{
-                  background: 'var(--card)', border: '1px solid var(--bdr)', borderRadius: 'var(--r)',
-                  padding: '12px 16px',
-                }}>
-                  <div style={{ fontSize: 9, fontWeight: 600, textTransform: 'uppercase', letterSpacing: 0.7, color: 'var(--t3)', marginBottom: 8, display: 'flex', alignItems: 'center', gap: 5 }}>
-                    <Shield size={10} color="var(--green)" /> Data Steward
-                  </div>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                    <div style={{
-                      width: 28, height: 28, borderRadius: 7,
-                      background: 'rgba(52,211,153,0.12)',
-                      display: 'flex', alignItems: 'center', justifyContent: 'center',
-                      fontSize: 11, fontWeight: 700, color: 'var(--green)',
-                    }}>
-                      {dataSteward.charAt(0)}
-                    </div>
-                    <div style={{ fontSize: 12, fontWeight: 600, color: 'var(--t1)' }}>{dataSteward}</div>
-                  </div>
-                </div>
-
-                {/* Upstream Users */}
-                <div style={{
-                  background: 'var(--card)', border: '1px solid var(--bdr)', borderRadius: 'var(--r)',
-                  padding: '12px 16px',
-                }}>
-                  <div style={{ fontSize: 9, fontWeight: 600, textTransform: 'uppercase', letterSpacing: 0.7, color: 'var(--t3)', marginBottom: 8, display: 'flex', alignItems: 'center', gap: 5 }}>
-                    <ArrowUpRight size={10} color="var(--blue)" /> Upstream Users
-                  </div>
-                  <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}>
-                    {upstreamUsers.length === 0 && <span style={{ fontSize: 10, color: 'var(--t3)' }}>None</span>}
-                    {upstreamUsers.map((u, i) => (
-                      <div key={i} style={{
-                        display: 'flex', alignItems: 'center', gap: 5, padding: '4px 8px',
-                        background: 'rgba(96,165,250,0.06)', border: '1px solid rgba(96,165,250,0.12)',
-                        borderRadius: 5, fontSize: 10, fontWeight: 500, color: 'var(--t2)',
-                      }}>
-                        <div style={{ width: 16, height: 16, borderRadius: 4, background: 'rgba(96,165,250,0.15)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 8, fontWeight: 700, color: 'var(--blue)' }}>
-                          {u.charAt(0)}
-                        </div>
-                        {u}
-                      </div>
-                    ))}
-                  </div>
-                </div>
-
-                {/* Downstream Users */}
-                <div style={{
-                  background: 'var(--card)', border: '1px solid var(--bdr)', borderRadius: 'var(--r)',
-                  padding: '12px 16px',
-                }}>
-                  <div style={{ fontSize: 9, fontWeight: 600, textTransform: 'uppercase', letterSpacing: 0.7, color: 'var(--t3)', marginBottom: 8, display: 'flex', alignItems: 'center', gap: 5 }}>
-                    <ArrowDownRight size={10} color="var(--purple)" /> Downstream Users
-                  </div>
-                  <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}>
-                    {downstreamUsers.length === 0 && <span style={{ fontSize: 10, color: 'var(--t3)' }}>None</span>}
-                    {downstreamUsers.map((u, i) => (
-                      <div key={i} style={{
-                        display: 'flex', alignItems: 'center', gap: 5, padding: '4px 8px',
-                        background: 'rgba(168,85,247,0.06)', border: '1px solid rgba(168,85,247,0.12)',
-                        borderRadius: 5, fontSize: 10, fontWeight: 500, color: 'var(--t2)',
-                      }}>
-                        <div style={{ width: 16, height: 16, borderRadius: 4, background: 'rgba(168,85,247,0.15)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 8, fontWeight: 700, color: 'var(--purple)' }}>
-                          {u.charAt(0)}
-                        </div>
-                        {u}
-                      </div>
-                    ))}
-                  </div>
                 </div>
               </div>
             </div>

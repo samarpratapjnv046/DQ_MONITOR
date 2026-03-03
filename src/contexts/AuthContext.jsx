@@ -9,6 +9,9 @@ export const AuthProvider = ({ children }) => {
     return saved ? JSON.parse(saved) : null;
   });
 
+  // Incrementing this forces any consumer of getTree() to get fresh data
+  const [treeVersion, setTreeVersion] = useState(0);
+
   const login = useCallback((email, password) => {
     const found = users.find(u => u.email === email && u.password === password);
     if (found) {
@@ -27,17 +30,24 @@ export const AuthProvider = ({ children }) => {
   const getTree = useCallback(() => {
     if (!user) return null;
     return getAccessibleTree(user);
-  }, [user]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [user, treeVersion]);
 
   const getNavItems = useCallback(() => {
     if (!user) return [];
     const tree = getAccessibleTree(user);
     if (!tree) return [];
     return getNavigableItems(tree, user.scopePath);
-  }, [user]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [user, treeVersion]);
+
+  /** Call after mutating the org tree to force sidebar re-render */
+  const refreshTree = useCallback(() => {
+    setTreeVersion(v => v + 1);
+  }, []);
 
   return (
-    <AuthContext.Provider value={{ user, login, logout, getTree, getNavItems }}>
+    <AuthContext.Provider value={{ user, login, logout, getTree, getNavItems, refreshTree, treeVersion }}>
       {children}
     </AuthContext.Provider>
   );
