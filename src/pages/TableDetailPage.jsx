@@ -288,7 +288,7 @@ export default function TableDetailPage() {
 
   // ── Styles ──
   const thS = { fontSize: 9, fontWeight: 600, letterSpacing: 0.7, textTransform: 'uppercase', color: 'var(--t3)', textAlign: 'left', padding: '9px 12px', borderBottom: '1px solid var(--bdr)', position: 'sticky', top: 0, background: 'var(--card)', zIndex: 2, whiteSpace: 'nowrap' };
-  const tdS = { padding: '8px 12px', fontSize: 11.5, borderBottom: '1px solid rgba(37,45,68,0.3)', verticalAlign: 'middle' };
+  const tdS = { padding: '8px 12px', fontSize: 11.5, borderBottom: '1px solid var(--bdr)', verticalAlign: 'middle' };
   const selS = { background: 'var(--card)', border: '1px solid var(--bdr)', borderRadius: 'var(--rs)', padding: '7px 10px', color: 'var(--t2)', fontFamily: 'var(--sans)', fontSize: 11, cursor: 'pointer', outline: 'none' };
 
   const tabCfg = [

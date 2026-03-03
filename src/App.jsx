@@ -31,6 +31,7 @@ export default function App() {
             <Route path="table/:tableName/*" element={<TableDetailPage />} />
             <Route path="rulemapping/*" element={<RuleMappingPage />} />
             <Route path="create-project/*" element={<CreateProjectPage />} />
+            <Route path="edit-project/*" element={<CreateProjectPage />} />
             <Route path="*" element={<DashboardPage />} />
           </Route>
           <Route path="*" element={<Navigate to="/" replace />} />

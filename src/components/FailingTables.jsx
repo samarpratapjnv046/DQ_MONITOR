@@ -117,7 +117,7 @@ const thStyle = {
   color: 'var(--t3)', textAlign: 'left', padding: '5px 8px',
   borderBottom: '1px solid var(--bdr)',
 };
-const tdStyle = { padding: '6px 8px', borderBottom: '1px solid rgba(37,45,68,0.4)' };
+const tdStyle = { padding: '6px 8px', borderBottom: '1px solid var(--bdr)' };
 const badgeStyle = {
   fontSize: '8.5px', fontWeight: 600, letterSpacing: '0.4px',
   textTransform: 'uppercase', padding: '2px 7px', borderRadius: '4px',

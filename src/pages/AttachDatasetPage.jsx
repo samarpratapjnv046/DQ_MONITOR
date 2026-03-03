@@ -289,7 +289,7 @@ export default function AttachDatasetPage() {
   const [form, setForm] = useState({
     source: '',
     host: '', port: '', database: '', warehouse: '', role: '', username: '', password: '',
-    projectName: '', projectOwnerEmail: user?.email || '', schemaName: '', layer: '', tables: '', sampleRows: '10000',
+    projectName: '', projectOwnerEmail: user?.email || '', ownerName: '', dataSteward: '', schemaName: '', layer: '', tables: '', sampleRows: '10000',
     validationMode: '', // 'custom' or 'mapping'
     customRules: '',
     ruleMappingDone: false,
@@ -310,7 +310,7 @@ export default function AttachDatasetPage() {
       if (form.source === 'csv_upload') return true;
       return form.host && form.database && form.username;
     }
-    if (step === 2) return form.projectOwnerEmail && /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(form.projectOwnerEmail.trim()) && form.schemaName && form.tables;
+    if (step === 2) return form.projectOwnerEmail && /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(form.projectOwnerEmail.trim()) && form.ownerName && form.schemaName && form.tables;
     if (step === 3) {
       if (form.validationMode === 'mapping') return form.ruleMappingDone;
       if (form.validationMode === 'custom') return true; // Custom rules are optional
@@ -455,20 +455,85 @@ export default function AttachDatasetPage() {
         );
 
       // ── STEP 3: Schema & Tables ──
-      case 'schema':
+      case 'schema': {
+        const SCHEMA_OPTIONS = [
+          { id: 'RAW_TRANSACTIONS', tables: ['TXN_HEADER', 'TXN_LINE_ITEMS', 'TXN_PAYMENTS', 'TXN_REFUNDS', 'TXN_AUDIT_LOG'] },
+          { id: 'CUSTOMER_360', tables: ['DIM_CUSTOMER', 'DIM_ACCOUNT', 'DIM_REGION', 'FACT_CUSTOMER_EVENTS', 'FACT_LIFETIME_VALUE'] },
+          { id: 'RISK_MODELS', tables: ['FACT_RISK_SCORES', 'DIM_RISK_FACTORS', 'FACT_PD_ESTIMATES', 'DIM_MODEL_VERSION', 'FACT_BACKTESTING'] },
+          { id: 'PRODUCT_CATALOG', tables: ['DIM_PRODUCT', 'DIM_CATEGORY', 'FACT_PRICING_HISTORY', 'DIM_SUPPLIER', 'FACT_INVENTORY'] },
+          { id: 'ORDER_MANAGEMENT', tables: ['FACT_ORDERS', 'FACT_ORDER_ITEMS', 'FACT_PAYMENTS', 'DIM_SHIPPING', 'FACT_RETURNS'] },
+          { id: 'FINANCIAL_REPORTING', tables: ['FACT_REVENUE', 'FACT_EXPENSES', 'DIM_COST_CENTER', 'DIM_GL_ACCOUNT', 'FACT_JOURNAL_ENTRIES'] },
+          { id: 'HR_ANALYTICS', tables: ['DIM_EMPLOYEE', 'FACT_ATTENDANCE', 'DIM_DEPARTMENT', 'FACT_PAYROLL', 'FACT_PERFORMANCE'] },
+          { id: 'MARKETING_DATA', tables: ['DIM_CAMPAIGN', 'FACT_IMPRESSIONS', 'FACT_CLICKS', 'FACT_CONVERSIONS', 'DIM_CHANNEL'] },
+        ];
+        const selectedSchema = SCHEMA_OPTIONS.find(s => s.id === form.schemaName);
+        const schemaTables = selectedSchema?.tables || [];
+        const stewardEmails = form.dataSteward ? form.dataSteward.split(',').map(e => e.trim()).filter(Boolean) : [];
         return (
           <div>
             <div style={{ fontSize: '13px', fontWeight: 600, marginBottom: '4px' }}>Schema & Table Selection</div>
             <div style={{ fontSize: '11px', color: 'var(--t3)', marginBottom: '16px' }}>
               Specify which schema and tables to validate in <strong style={{ color: 'var(--t1)' }}>{node.name}</strong>
             </div>
+
+            {/* Owner Name & Data Steward */}
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12, marginBottom: 14 }}>
+              <div>
+                <label style={labelStyle}>Owner Name *</label>
+                <input style={inputStyle} placeholder="e.g. John Smith" value={form.ownerName} onChange={e => u('ownerName', e.target.value)} />
+              </div>
+              <div>
+                <label style={labelStyle}>Data Steward (emails)</label>
+                <div style={{
+                  ...inputStyle, display: 'flex', flexWrap: 'wrap', gap: 4, alignItems: 'center',
+                  padding: '6px 10px', minHeight: 40, cursor: 'text',
+                }}>
+                  {stewardEmails.map((email, i) => (
+                    <span key={i} style={{
+                      display: 'inline-flex', alignItems: 'center', gap: 4,
+                      fontSize: 10, fontWeight: 600, padding: '3px 8px', borderRadius: 4,
+                      background: 'rgba(96,165,250,0.12)', color: 'var(--blue)', border: '1px solid rgba(96,165,250,0.2)',
+                    }}>
+                      {email}
+                      <span onClick={() => {
+                        const next = stewardEmails.filter((_, idx) => idx !== i);
+                        u('dataSteward', next.join(', '));
+                      }} style={{ cursor: 'pointer', fontWeight: 700, opacity: 0.7, fontSize: 11 }}>✕</span>
+                    </span>
+                  ))}
+                  <input
+                    placeholder={stewardEmails.length === 0 ? 'Type email & press Enter' : ''}
+                    style={{
+                      background: 'none', border: 'none', outline: 'none', color: 'var(--t1)',
+                      fontFamily: 'inherit', fontSize: 12, flex: 1, minWidth: 120, padding: '2px 0',
+                    }}
+                    onKeyDown={e => {
+                      if ((e.key === 'Enter' || e.key === ',') && e.target.value.trim()) {
+                        e.preventDefault();
+                        const email = e.target.value.trim().replace(/,$/, '');
+                        if (email && /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+                          const next = [...stewardEmails, email];
+                          u('dataSteward', next.join(', '));
+                          e.target.value = '';
+                        }
+                      }
+                      if (e.key === 'Backspace' && !e.target.value && stewardEmails.length > 0) {
+                        const next = stewardEmails.slice(0, -1);
+                        u('dataSteward', next.join(', '));
+                      }
+                    }}
+                  />
+                </div>
+                <div style={{ fontSize: '9px', color: 'var(--t3)', marginTop: '3px' }}>Press Enter or comma to add multiple emails</div>
+              </div>
+            </div>
+
             {/* Project Custodian */}
             <div style={{ marginBottom: 14, padding: '14px 16px', borderRadius: 10, background: 'var(--card)', border: '1px solid var(--bdr)' }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 10 }}>
                 <FolderOpen size={14} color="var(--amber)" />
                 <span style={{ fontSize: '12px', fontWeight: 700, color: 'var(--t1)' }}>Project: {node.name}</span>
               </div>
-              {/* Project Custodian Email */}
               <div>
                 <label style={labelStyle}>
                   <span style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
@@ -484,65 +549,80 @@ export default function AttachDatasetPage() {
                 <div style={{ fontSize: '9px', color: 'var(--t3)', marginTop: '3px' }}>Email of the project custodian responsible for this schema</div>
               </div>
             </div>
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr', gap: 12 }}>
-              <div><label style={labelStyle}>Schema Name *</label><input style={inputStyle} placeholder="RAW_TRANSACTIONS" value={form.schemaName} onChange={e => u('schemaName', e.target.value)} /></div>
+
+            {/* Schema Selection Dropdown */}
+            <div style={{ marginBottom: 12 }}>
+              <label style={labelStyle}>Select Schema *</label>
+              <select
+                style={{ ...inputStyle, cursor: 'pointer', appearance: 'auto' }}
+                value={form.schemaName}
+                onChange={e => { u('schemaName', e.target.value); u('tables', ''); }}
+              >
+                <option value="">— Choose a schema —</option>
+                {SCHEMA_OPTIONS.map(s => <option key={s.id} value={s.id}>{s.id}</option>)}
+              </select>
             </div>
-            <div style={{ marginTop: 12 }}>
-              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 6 }}>
-                <label style={{ ...labelStyle, marginBottom: 0 }}>Tables *</label>
-                <button
-                  type="button"
-                  onClick={() => {
-                    const SAMPLE = ['DIM_CUSTOMER', 'FACT_ORDERS', 'DIM_PRODUCT', 'FACT_PAYMENTS', 'DIM_REGION', 'FACT_TRANSACTIONS', 'DIM_DATE', 'FACT_REVENUE', 'DIM_ACCOUNT', 'FACT_RISK_SCORES'];
+
+            {/* Tables — only shown when schema is selected */}
+            {form.schemaName && schemaTables.length > 0 && (
+              <div style={{ marginTop: 12 }}>
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 6 }}>
+                  <label style={{ ...labelStyle, marginBottom: 0 }}>Tables *</label>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      const current = form.tables.split(',').map(t => t.trim()).filter(Boolean);
+                      const allSelected = schemaTables.every(s => current.includes(s));
+                      u('tables', allSelected ? '' : schemaTables.join(', '));
+                    }}
+                    style={{
+                      fontSize: 9, fontWeight: 700, padding: '3px 10px', borderRadius: 5,
+                      border: '1px solid var(--bdr)', background: 'var(--elev)', color: 'var(--blue)',
+                      cursor: 'pointer', textTransform: 'uppercase', letterSpacing: 0.4,
+                    }}
+                  >
+                    {(() => {
+                      const current = form.tables.split(',').map(t => t.trim()).filter(Boolean);
+                      return schemaTables.every(s => current.includes(s)) ? 'Deselect All' : 'Select All';
+                    })()}
+                  </button>
+                </div>
+                <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6, marginBottom: 6 }}>
+                  {schemaTables.map(tbl => {
                     const current = form.tables.split(',').map(t => t.trim()).filter(Boolean);
-                    const allSelected = SAMPLE.every(s => current.includes(s));
-                    u('tables', allSelected ? '' : SAMPLE.join(', '));
-                  }}
-                  style={{
-                    fontSize: 9, fontWeight: 700, padding: '3px 10px', borderRadius: 5,
-                    border: '1px solid var(--bdr)', background: 'var(--elev)', color: 'var(--blue)',
-                    cursor: 'pointer', textTransform: 'uppercase', letterSpacing: 0.4,
-                  }}
-                >
-                  {(() => {
-                    const SAMPLE = ['DIM_CUSTOMER', 'FACT_ORDERS', 'DIM_PRODUCT', 'FACT_PAYMENTS', 'DIM_REGION', 'FACT_TRANSACTIONS', 'DIM_DATE', 'FACT_REVENUE', 'DIM_ACCOUNT', 'FACT_RISK_SCORES'];
-                    const current = form.tables.split(',').map(t => t.trim()).filter(Boolean);
-                    return SAMPLE.every(s => current.includes(s)) ? 'Deselect All' : 'Select All';
-                  })()}
-                </button>
+                    const selected = current.includes(tbl);
+                    return (
+                      <div key={tbl} onClick={() => {
+                        const next = selected ? current.filter(t => t !== tbl) : [...current, tbl];
+                        u('tables', next.join(', '));
+                      }} style={{
+                        fontSize: 10, fontFamily: 'var(--mono)', fontWeight: 600,
+                        padding: '6px 12px', borderRadius: 6, cursor: 'pointer',
+                        background: selected ? 'rgba(52,211,153,0.12)' : 'var(--elev)',
+                        border: `1.5px solid ${selected ? 'var(--green)' : 'var(--bdr)'}`,
+                        color: selected ? 'var(--green)' : 'var(--t3)',
+                        transition: 'all 0.15s', display: 'flex', alignItems: 'center', gap: 5,
+                      }}>
+                        {selected && <CheckCircle2 size={10} />}
+                        {tbl}
+                      </div>
+                    );
+                  })}
+                </div>
+                <div style={{ fontSize: 9, color: 'var(--t3)' }}>
+                  {form.tables ? `${form.tables.split(',').filter(t => t.trim()).length} tables selected` : 'Click tables to select or use Select All'}
+                </div>
               </div>
-              <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6, marginBottom: 6 }}>
-                {['DIM_CUSTOMER', 'FACT_ORDERS', 'DIM_PRODUCT', 'FACT_PAYMENTS', 'DIM_REGION', 'FACT_TRANSACTIONS', 'DIM_DATE', 'FACT_REVENUE', 'DIM_ACCOUNT', 'FACT_RISK_SCORES'].map(tbl => {
-                  const current = form.tables.split(',').map(t => t.trim()).filter(Boolean);
-                  const selected = current.includes(tbl);
-                  return (
-                    <div key={tbl} onClick={() => {
-                      const next = selected ? current.filter(t => t !== tbl) : [...current, tbl];
-                      u('tables', next.join(', '));
-                    }} style={{
-                      fontSize: 10, fontFamily: 'var(--mono)', fontWeight: 600,
-                      padding: '6px 12px', borderRadius: 6, cursor: 'pointer',
-                      background: selected ? 'rgba(52,211,153,0.12)' : 'var(--elev)',
-                      border: `1.5px solid ${selected ? 'var(--green)' : 'var(--bdr)'}`,
-                      color: selected ? 'var(--green)' : 'var(--t3)',
-                      transition: 'all 0.15s', display: 'flex', alignItems: 'center', gap: 5,
-                    }}>
-                      {selected && <CheckCircle2 size={10} />}
-                      {tbl}
-                    </div>
-                  );
-                })}
+            )}
+            {form.schemaName && (
+              <div style={{ marginTop: 12 }}>
+                <label style={labelStyle}>Sample Row Limit</label>
+                <input style={inputStyle} type="number" placeholder="10000" value={form.sampleRows} onChange={e => u('sampleRows', e.target.value)} />
               </div>
-              <div style={{ fontSize: 9, color: 'var(--t3)' }}>
-                {form.tables ? `${form.tables.split(',').filter(t => t.trim()).length} tables selected` : 'Click tables to select or use Select All'}
-              </div>
-            </div>
-            <div style={{ marginTop: 12 }}>
-              <label style={labelStyle}>Sample Row Limit</label>
-              <input style={inputStyle} type="number" placeholder="10000" value={form.sampleRows} onChange={e => u('sampleRows', e.target.value)} />
-            </div>
+            )}
           </div>
         );
+      }
 
       // ── STEP 4: Validation Rules (Custom or Rule Mapping) ──
       case 'validation':

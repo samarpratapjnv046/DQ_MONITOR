@@ -14,7 +14,7 @@ const IssueBar = ({ color, label, pct, delay }) => {
     }}>
       <div style={{ width: '7px', height: '7px', borderRadius: '2px', background: color, flexShrink: 0 }} />
       <div style={{ flex: 1, fontSize: '11px', color: 'var(--t2)' }}>{label}</div>
-      <div style={{ width: '100px', height: '5px', background: 'rgba(255,255,255,0.04)', borderRadius: '99px', overflow: 'hidden', flexShrink: 0 }}>
+      <div style={{ width: '100px', height: '5px', background: 'var(--bdr)', borderRadius: '99px', overflow: 'hidden', flexShrink: 0 }}>
         <div ref={ref} style={{
           height: '100%', borderRadius: '99px', background: color,
           width: '0%', transition: 'width 1s ease',

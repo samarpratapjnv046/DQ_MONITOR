@@ -45,7 +45,7 @@ function SelectorBox({ label, step, items, selected, onToggle, onSelectAll, onDe
             style={{ background: 'none', border: 'none', outline: 'none', color: 'var(--t1)', fontFamily: 'var(--sans)', fontSize: 11.5, width: '100%' }} />
         </div>
         {/* Actions */}
-        <div style={{ display: 'flex', gap: 6, padding: '6px 10px', borderBottom: '1px solid rgba(37,45,68,0.4)', background: 'rgba(30,38,64,0.3)' }}>
+        <div style={{ display: 'flex', gap: 6, padding: '6px 10px', borderBottom: '1px solid var(--bdr)', background: 'var(--elev)' }}>
           <span onClick={onSelectAll} style={{ fontSize: 10, color: 'var(--blue)', cursor: 'pointer' }}>Select All</span>
           <span onClick={onDeselectAll} style={{ fontSize: 10, color: 'var(--t3)', cursor: 'pointer' }}>Deselect All</span>
         </div>
@@ -277,7 +277,7 @@ export default function RuleMappingPage() {
   }
 
   const thS = { fontSize: 9, fontWeight: 600, letterSpacing: 0.7, textTransform: 'uppercase', color: 'var(--t3)', textAlign: 'left', padding: '9px 12px', borderBottom: '1px solid var(--bdr)', position: 'sticky', top: 0, background: 'var(--card)', zIndex: 2, whiteSpace: 'nowrap' };
-  const tdS = { padding: '8px 12px', fontSize: 11.5, borderBottom: '1px solid rgba(37,45,68,0.3)', verticalAlign: 'middle' };
+  const tdS = { padding: '8px 12px', fontSize: 11.5, borderBottom: '1px solid var(--bdr)', verticalAlign: 'middle' };
   const selS = { background: 'var(--card)', border: '1px solid var(--bdr)', borderRadius: 'var(--rs)', padding: '7px 10px', color: 'var(--t2)', fontFamily: 'var(--sans)', fontSize: 11, cursor: 'pointer', outline: 'none' };
 
   const tableItems = schemaData.tableNames.map(t => ({ id: t, label: t, sub: `${(schemaData.tables[t] || []).length} cols` }));

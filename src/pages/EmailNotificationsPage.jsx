@@ -388,8 +388,8 @@ export default function EmailNotificationsPage() {
                     ))}</tr></thead>
                     <tbody>
                       <tr><Td>Overall Health Score</Td><Td>90.0%</Td><Td><Metric c="red">{'{{health_score}}'}</Metric></Td><Td style={{ color: 'var(--red)' }}>✕ BREACH</Td></tr>
-                      <tr><Td>Schema Validation</Td><Td>85.0%</Td><Td><Metric c="green">{'{{schema_score}}'}</Metric></Td><Td style={{ color: 'var(--green)' }}>✓ OK</Td></tr>
-                      <tr><Td>Data Quality Rules</Td><Td>95.0%</Td><Td><Metric c="green">{'{{dq_score}}'}</Metric></Td><Td style={{ color: 'var(--green)' }}>✓ OK</Td></tr>
+                      <tr><Td>Schema Validation</Td><Td>85.0%</Td><Td><Metric c="red">{'{{schema_score}}'}</Metric></Td><Td style={{ color: 'var(--red)' }}>✕ BREACH</Td></tr>
+                      <tr><Td>Data Quality Rules</Td><Td>95.0%</Td><Td><Metric c="red">{'{{dq_score}}'}</Metric></Td><Td style={{ color: 'var(--red)' }}>✕ BREACH</Td></tr>
                     </tbody>
                   </table>
 
@@ -525,7 +525,7 @@ function Tag({ children }) {
 }
 
 function Td({ children, style }) {
-  return <td style={{ padding: '6px 10px', borderBottom: '1px solid rgba(37,45,68,0.3)', color: 'var(--t2)', fontFamily: 'var(--mono)', fontSize: 10.5, ...style }}>{children}</td>;
+  return <td style={{ padding: '6px 10px', borderBottom: '1px solid var(--bdr)', color: 'var(--t2)', fontFamily: 'var(--mono)', fontSize: 10.5, ...style }}>{children}</td>;
 }
 
 function Metric({ children, c }) {

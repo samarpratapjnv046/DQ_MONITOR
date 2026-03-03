@@ -4,7 +4,7 @@ import { useNavigate, useLocation } from 'react-router-dom';
 import {
   ChevronDown, ChevronRight, Building2, Globe, Briefcase, Users, FolderOpen,
   LogOut, LayoutDashboard, Shield, Lock, Database, Plus, Trash2, AlertTriangle, X,
-  Sun, Moon
+  Sun, Moon, Pencil
 } from 'lucide-react';
 import { getAncestorChain } from '../data/orgStructure';
 
@@ -229,6 +229,8 @@ function NavItem({ node, path, depth = 0, activePath, isTeamUser, isProjectUser,
   const canAttachSchema = (isTeamUser || isProjectUser) && node.type === 'project';
   // Team or project-level users can request deletion on project nodes
   const canDelete = (isTeamUser || isProjectUser) && node.type === 'project';
+  // Team or project-level users can edit project nodes
+  const canEdit = (isTeamUser || isProjectUser) && node.type === 'project';
 
   const handleClick = () => navigate(`/dashboard/${pathStr}`);
 
@@ -245,6 +247,11 @@ function NavItem({ node, path, depth = 0, activePath, isTeamUser, isProjectUser,
   const handleDelete = (e) => {
     e.stopPropagation();
     onDeleteProject?.(node, path);
+  };
+
+  const handleEditProject = (e) => {
+    e.stopPropagation();
+    navigate(`/dashboard/edit-project/${pathStr}`);
   };
 
   return (
@@ -318,6 +325,22 @@ function NavItem({ node, path, depth = 0, activePath, isTeamUser, isProjectUser,
             onMouseLeave={e => { e.currentTarget.style.background = 'rgba(52,211,153,0.08)'; e.currentTarget.style.borderColor = 'rgba(52,211,153,0.15)'; }}
           >
             <Plus size={10} color="var(--green)" strokeWidth={2.5} />
+          </span>
+        )}
+
+        {/* Edit button (project, team or project users) */}
+        {canEdit && (
+          <span onClick={handleEditProject} title={`Edit ${node.name}`}
+            style={{
+              display: 'flex', alignItems: 'center', justifyContent: 'center',
+              width: '18px', height: '18px', borderRadius: '5px',
+              background: 'rgba(251,191,36,0.08)', border: '1px solid rgba(251,191,36,0.15)',
+              cursor: 'pointer', flexShrink: 0, transition: 'all 0.15s',
+            }}
+            onMouseEnter={e => { e.currentTarget.style.background = 'rgba(251,191,36,0.2)'; e.currentTarget.style.borderColor = 'rgba(251,191,36,0.4)'; }}
+            onMouseLeave={e => { e.currentTarget.style.background = 'rgba(251,191,36,0.08)'; e.currentTarget.style.borderColor = 'rgba(251,191,36,0.15)'; }}
+          >
+            <Pencil size={9} color="var(--amber)" />
           </span>
         )}
 
@@ -396,13 +419,13 @@ function AncestorItem({ node, isLast }) {
         style={{
           display: 'flex', alignItems: 'center', gap: '7px',
           padding: '5px 10px 5px 12px', margin: '1px 6px', borderRadius: '6px',
-          background: 'transparent', opacity: 0.55, cursor: 'default', position: 'relative',
+          background: 'transparent', opacity: 0.7, cursor: 'default', position: 'relative',
         }}
         title={`${config.label}: ${node.name} (read-only — outside your access scope)`}
       >
         <Icon size={12} color={config.color} strokeWidth={2} />
         <span style={{
-          fontSize: '10.5px', fontWeight: 500, color: 'var(--t3)',
+          fontSize: '10.5px', fontWeight: 500, color: 'var(--t2)',
           flex: 1, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
         }}>
           {node.emoji ? `${node.emoji} ` : ''}{node.name}
@@ -410,7 +433,7 @@ function AncestorItem({ node, isLast }) {
         <Lock size={9} color="var(--t3)" style={{ flexShrink: 0 }} />
         <span style={{
           fontSize: '7.5px', fontWeight: 600, padding: '1.5px 5px', borderRadius: '3px',
-          background: 'rgba(255,255,255,0.04)', color: 'var(--t3)', textTransform: 'uppercase',
+          background: 'var(--elev)', color: 'var(--t3)', textTransform: 'uppercase',
           letterSpacing: '0.4px', flexShrink: 0,
         }}>
           {node.type === 'bu' ? 'BU' : node.type}

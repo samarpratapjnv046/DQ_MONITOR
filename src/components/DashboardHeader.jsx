@@ -62,7 +62,7 @@ export default function DashboardHeader({ node, typeLabel, onRefresh }) {
               <span style={{
                 display: 'inline-flex', alignItems: 'center', gap: '4px',
                 fontSize: '9px', fontWeight: 600, padding: '2px 8px', borderRadius: '4px',
-                background: 'rgba(167,139,250,0.1)', color: '#A78BFA',
+                background: 'var(--purple-d)', color: 'var(--purple)',
               }}>
                 <User size={9} /> Owner: {node.owner}
               </span>
@@ -70,7 +70,7 @@ export default function DashboardHeader({ node, typeLabel, onRefresh }) {
                 <span style={{
                   display: 'inline-flex', alignItems: 'center', gap: '4px',
                   fontSize: '9px', fontWeight: 600, padding: '2px 8px', borderRadius: '4px',
-                  background: 'rgba(251,191,36,0.1)', color: '#FBBF24',
+                  background: 'var(--amber-d)', color: 'var(--amber)',
                 }}>
                   <User size={9} /> Data Steward: {node.dataSteward}
                 </span>
@@ -79,7 +79,7 @@ export default function DashboardHeader({ node, typeLabel, onRefresh }) {
                 <span style={{
                   display: 'inline-flex', alignItems: 'center', gap: '4px',
                   fontSize: '9px', fontWeight: 600, padding: '2px 8px', borderRadius: '4px',
-                  background: 'rgba(34,211,238,0.1)', color: '#22D3EE',
+                  background: 'var(--cyan-d)', color: 'var(--cyan)',
                 }}>
                   <User size={9} /> Upstream/Downstream Users: {node.upstreamDownstreamUsers.join(', ')}
                 </span>
@@ -88,7 +88,7 @@ export default function DashboardHeader({ node, typeLabel, onRefresh }) {
                 <span style={{
                   display: 'inline-flex', alignItems: 'center', gap: '4px',
                   fontSize: '9px', fontWeight: 600, padding: '2px 8px', borderRadius: '4px',
-                  background: 'rgba(96,165,250,0.1)', color: '#60A5FA',
+                  background: 'var(--blue-d)', color: 'var(--blue)',
                 }}>
                   <Clock size={9} /> Created: {node.createdAt}
                 </span>

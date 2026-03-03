@@ -41,15 +41,15 @@ export default function TrendChart({ metrics: m }) {
 
   const activeLines = active === 'all'
     ? [
-        { key: 'Health', color: '#34D399' },
-        { key: 'Schema', color: '#A78BFA' },
-        { key: 'Data Quality', color: '#60A5FA' },
-      ]
+      { key: 'Health', color: '#34D399' },
+      { key: 'Schema', color: '#A78BFA' },
+      { key: 'Data Quality', color: '#60A5FA' },
+    ]
     : active === 'health'
-    ? [{ key: 'Health', color: '#34D399' }]
-    : active === 'schema'
-    ? [{ key: 'Schema', color: '#A78BFA' }]
-    : [{ key: 'Data Quality', color: '#60A5FA' }];
+      ? [{ key: 'Health', color: '#34D399' }]
+      : active === 'schema'
+        ? [{ key: 'Schema', color: '#A78BFA' }]
+        : [{ key: 'Data Quality', color: '#60A5FA' }];
 
   return (
     <div className="anim d9" style={{
@@ -85,11 +85,11 @@ export default function TrendChart({ metrics: m }) {
       <div style={{ flex: 1, minHeight: 0 }}>
         <ResponsiveContainer width="100%" height="100%">
           <LineChart data={data} margin={{ top: 10, right: 10, bottom: 5, left: -15 }}>
-            <CartesianGrid strokeDasharray="3 3" stroke="rgba(37,45,68,0.5)" />
+            <CartesianGrid strokeDasharray="3 3" stroke="var(--bdr)" />
             <XAxis
               dataKey="name"
               tick={{ fontSize: 8, fill: '#5A6580', fontFamily: 'JetBrains Mono' }}
-              axisLine={{ stroke: 'rgba(37,45,68,0.5)' }}
+              axisLine={{ stroke: 'var(--bdr)' }}
               tickLine={false}
               interval={1}
             />

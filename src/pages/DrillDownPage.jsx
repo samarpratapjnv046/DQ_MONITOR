@@ -167,7 +167,7 @@ export default function DrillDownPage() {
 
   // ── Styles ──
   const thS = { fontSize: 9, fontWeight: 600, letterSpacing: 0.7, textTransform: 'uppercase', color: 'var(--t3)', textAlign: 'left', padding: '12px 16px', borderBottom: '1px solid var(--bdr)', position: 'sticky', top: 0, background: 'var(--card)', zIndex: 2, whiteSpace: 'nowrap' };
-  const tdS = { padding: '12px 16px', fontSize: 11.5, borderBottom: '1px solid rgba(37,45,68,0.3)', verticalAlign: 'middle', cursor: 'pointer' };
+  const tdS = { padding: '12px 16px', fontSize: 11.5, borderBottom: '1px solid var(--bdr)', verticalAlign: 'middle', cursor: 'pointer' };
 
   return (
     <div style={{ height: '100vh', display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>

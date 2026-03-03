@@ -20,7 +20,7 @@ const CovBar = ({ label, pct, colorClass, delay }) => {
         dangerouslySetInnerHTML={{ __html: label }}
       />
       <div style={{
-        flex: 1, height: '16px', background: 'rgba(255,255,255,0.03)',
+        flex: 1, height: '16px', background: 'var(--bdr)',
         borderRadius: '5px', overflow: 'hidden', position: 'relative',
       }}>
         <div ref={ref} style={{

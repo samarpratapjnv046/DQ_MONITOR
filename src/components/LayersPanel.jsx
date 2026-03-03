@@ -2,16 +2,16 @@ import { useEffect, useRef } from 'react';
 
 const layerStyles = {
   schema: {
-    badge: { bg: 'rgba(167,139,250,0.12)', color: '#A78BFA' },
-    bar: 'linear-gradient(90deg, #A78BFA, #c4b5fd)',
+    badge: { bg: 'var(--purple-d)', color: 'var(--purple)' },
+    bar: 'linear-gradient(90deg, var(--purple), #c4b5fd)',
   },
   table: {
-    badge: { bg: 'rgba(34,211,238,0.12)', color: '#22D3EE' },
-    bar: 'linear-gradient(90deg, #22D3EE, #67e8f9)',
+    badge: { bg: 'var(--cyan-d)', color: 'var(--cyan)' },
+    bar: 'linear-gradient(90deg, var(--cyan), #67e8f9)',
   },
   dq: {
-    badge: { bg: 'rgba(96,165,250,0.12)', color: '#60A5FA' },
-    bar: 'linear-gradient(90deg, #60A5FA, #93c5fd)',
+    badge: { bg: 'var(--blue-d)', color: 'var(--blue)' },
+    bar: 'linear-gradient(90deg, var(--blue), #93c5fd)',
   },
 };
 
@@ -40,7 +40,7 @@ const LayerBar = ({ label, layerKey, rate, passed, total }) => {
       }}>
         {label}
       </div>
-      <div style={{ flex: 1, height: '6px', background: 'rgba(255,255,255,0.04)', borderRadius: '99px', overflow: 'hidden' }}>
+      <div style={{ flex: 1, height: '6px', background: 'var(--bdr)', borderRadius: '99px', overflow: 'hidden' }}>
         <div ref={barRef} style={{
           height: '100%', borderRadius: '99px', width: '0%',
           background: style.bar,
