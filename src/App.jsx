@@ -10,6 +10,7 @@ import DrillDownPage from './pages/DrillDownPage';
 import TableDetailPage from './pages/TableDetailPage';
 import RuleMappingPage from './pages/RuleMappingPage';
 import CreateProjectPage from './pages/CreateProjectPage';
+import RulePreviewPage from './pages/RulePreviewPage';
 import './styles/global.css';
 
 export default function App() {
@@ -31,6 +32,7 @@ export default function App() {
             <Route path="table/:tableName/*" element={<TableDetailPage />} />
             <Route path="rulemapping/*" element={<RuleMappingPage />} />
             <Route path="create-project/*" element={<CreateProjectPage />} />
+            <Route path="rule-preview/*" element={<RulePreviewPage />} />
             <Route path="edit-project/*" element={<CreateProjectPage />} />
             <Route path="*" element={<DashboardPage />} />
           </Route>

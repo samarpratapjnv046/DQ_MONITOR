@@ -1,11 +1,11 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
-import { useNavigate, useParams } from 'react-router-dom';
+import { useNavigate, useParams, useLocation } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import { findNode, addSchemaToNode } from '../data/orgStructure';
 import {
   Database, Upload, Server, ChevronRight, ChevronLeft,
   CheckCircle2, AlertCircle, Link2, Table2, Clock, Zap, Shield, ArrowLeft, Mail,
-  Snowflake, HardDrive, Cloud, Layers, FolderOpen, Loader2, Play, Timer
+  Snowflake, HardDrive, Cloud, Layers, FolderOpen, Loader2, Play, Timer, Eye
 } from 'lucide-react';
 
 // ══════════════════════════════════════════════════════════════
@@ -69,7 +69,7 @@ const btnSecondary = {
 // RULE MAPPING PROGRESS COMPONENT
 // ══════════════════════════════════════════════════════════════
 
-function RuleMappingProgress({ onComplete }) {
+function RuleMappingProgress({ onComplete, onPreview, showPreview }) {
   const [progress, setProgress] = useState(0);
   const [stage, setStage] = useState('Initializing...');
   const [started, setStarted] = useState(false);
@@ -188,6 +188,16 @@ function RuleMappingProgress({ onComplete }) {
           covering null checks, type validation, uniqueness, range bounds, regex patterns, and row counts.
         </div>
       )}
+      {isComplete && showPreview && (
+        <button onClick={onPreview} style={{
+          marginTop: '14px', display: 'flex', alignItems: 'center', gap: '8px',
+          padding: '10px 22px', borderRadius: '8px', border: 'none', cursor: 'pointer',
+          background: 'linear-gradient(135deg, var(--blue), var(--purple))',
+          color: '#fff', fontSize: '12px', fontWeight: 700, transition: 'all 0.2s',
+        }}>
+          <Eye size={14} /> Preview Mapped Rules
+        </button>
+      )}
     </div>
   );
 }
@@ -281,12 +291,15 @@ export default function AttachDatasetPage() {
   const { '*': pathParam } = useParams();
   const { user, refreshTree } = useAuth();
   const navigate = useNavigate();
+  const location = useLocation();
 
   const segments = pathParam?.replace('attach/', '').split('/').filter(Boolean) || user.scopePath;
   const node = findNode(segments);
 
-  const [step, setStep] = useState(0);
-  const [form, setForm] = useState({
+  // Restore state from preview page navigation if available
+  const restoredState = location.state;
+  const [step, setStep] = useState(restoredState?.savedStep ?? 0);
+  const [form, setForm] = useState(restoredState?.savedForm ?? {
     source: '',
     host: '', port: '', database: '', warehouse: '', role: '', username: '', password: '',
     projectName: '', projectOwnerEmail: user?.email || '', ownerName: '', dataSteward: '', schemaName: '', layer: '', tables: '', sampleRows: '10000',
@@ -692,7 +705,11 @@ export default function AttachDatasetPage() {
                   <span style={{ fontSize: 12, fontWeight: 600, color: 'var(--t1)' }}>Automated Rule Mapping</span>
                   {!form.ruleMappingDone && <button onClick={() => { u('validationMode', ''); u('ruleMappingDone', false); }} style={{ fontSize: 10, color: 'var(--blue)', background: 'none', border: 'none', cursor: 'pointer', fontWeight: 600 }}>← Change mode</button>}
                 </div>
-                <RuleMappingProgress onComplete={() => u('ruleMappingDone', true)} />
+                <RuleMappingProgress
+                  onComplete={() => u('ruleMappingDone', true)}
+                  showPreview={form.ruleMappingDone}
+                  onPreview={() => navigate('/dashboard/rule-preview', { state: { schemaName: form.schemaName, tables: form.tables, returnPath: window.location.pathname, savedStep: step, savedForm: form } })}
+                />
               </div>
             )}
           </div>

@@ -601,7 +601,7 @@ export default function Sidebar() {
             color: 'var(--t3)', textTransform: 'uppercase', letterSpacing: '0.7px',
             display: 'flex', alignItems: 'center', gap: '5px',
           }}>
-            <Lock size={9} /> Hierarchy (Read-Only)
+            <Lock size={9} /> Hierarchy
           </div>
           <div style={{ padding: '2px 0 0' }}>
             {ancestors.map((a, i) => (

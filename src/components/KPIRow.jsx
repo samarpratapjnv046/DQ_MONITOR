@@ -33,28 +33,28 @@ const KPICard = ({ color, icon, label, sublabel, value, valueColor, sub, delay }
 );
 
 export default function KPIRow({ metrics: m, node }) {
+  const totalPassed = m.schema.passed + m.table.passed + m.dq.passed;
+  const totalAll = m.schema.total + m.table.total + m.dq.total;
+  const overallHealthAvg = totalAll > 0 ? ((totalPassed / totalAll) * 100).toFixed(1) : '0.0';
   return (
-    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(6, 1fr)', gap: '8px' }}>
+    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(5, 1fr)', gap: '8px' }}>
       <KPICard delay={1} color="var(--green)" icon="⬡"
-        label="Weighted Health Score" sublabel="(Data Type Check + Table Integrity Rules + Data Quality Check combined)"
-        value={`${m.healthScore}%`} sub="60% DQ · 30% Data Type Check · 10% Table Integrity" />
-      <KPICard delay={2} color="var(--blue)" icon="◈"
-        label="All Validations Pass Rate" sublabel="(across all 3 validation layers)"
-        value={`${m.passRate}%`} sub={`${m.totalPass.toLocaleString()} / ${m.totalRules.toLocaleString()} passed`} />
-      <KPICard delay={3} color="var(--cyan)" icon="⊞"
+        label="Overall Health Score" sublabel="(Average of all validation layers)"
+        value={`${overallHealthAvg}%`} sub={`${totalPassed.toLocaleString()} / ${totalAll.toLocaleString()} passed across all layers`} />
+      <KPICard delay={2} color="var(--cyan)" icon="⊞"
         label="Schema Table Coverage" sublabel="(tables validated vs total)"
         value={`${m.coverage}%`} sub={`${m.totalTables} / ${m.totalTables} tables`} />
-      <KPICard delay={4} color="var(--red)" icon="⚑"
+      <KPICard delay={3} color="var(--red)" icon="⚑"
         label="Failed Validation Rules" sublabel="(Data Type Check + Data Quality Check combined)"
         value={`${m.failedRate}%`} sub={`${m.totalFail} of ${m.totalRules.toLocaleString()} rules failed`} />
-      <KPICard delay={5} color="var(--amber)" icon="⊘"
+      <KPICard delay={4} color="var(--amber)" icon="⊘"
         label="Unmonitored Columns" sublabel="(bad dates or 100% NULL — no rules)"
         value={`${m.unmonitoredPct}%`} sub={`${m.skippedCols} cols across ${m.skippedTables} tables`} />
       {(() => {
         const flagged = Math.round((m.tablesNeedingFixes / 100) * m.totalTables);
         const pct = m.totalTables > 0 ? ((flagged / m.totalTables) * 100).toFixed(1) : '0.0';
         return (
-          <KPICard delay={6} color="var(--purple)" icon="△"
+          <KPICard delay={5} color="var(--purple)" icon="△"
             label="Tables Needing Fixes" sublabel="(data type check, data quality check, or skips)"
             value={`${pct}%`} sub={`${flagged} of ${m.totalTables} tables flagged`} />
         );
