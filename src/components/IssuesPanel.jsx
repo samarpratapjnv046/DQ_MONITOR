@@ -36,8 +36,8 @@ export default function IssuesPanel({ metrics: m }) {
       <div style={{ fontSize: '11.5px', fontWeight: 600, marginBottom: '10px', display: 'flex', alignItems: 'center', gap: '7px' }}>
         <span style={{ fontSize: '13px' }}>⊿</span> What Issues Were Found (% of {m.issues.total} total)
       </div>
-      <IssueBar color="var(--red)" label="Column Type Mismatches (Schema)" pct={m.issues.typeMismatchPct} delay={0} />
-      <IssueBar color="var(--amber)" label="Value / Range / Stats Failures (DQ)" pct={m.issues.dqFailurePct} delay={100} />
+      <IssueBar color="var(--red)" label="Column Type Mismatches (Data Type Check)" pct={m.issues.typeMismatchPct} delay={0} />
+      <IssueBar color="var(--amber)" label="Value / Range / Stats Failures (Data Quality Check)" pct={m.issues.dqFailurePct} delay={100} />
       <IssueBar color="var(--purple)" label="Dates Beyond Valid Range (Skipped)" pct={m.issues.dateSkipPct} delay={200} />
       <IssueBar color="var(--t3)" label="Entirely Empty Columns (Skipped)" pct={m.issues.nullSkipPct} delay={300} />
     </div>

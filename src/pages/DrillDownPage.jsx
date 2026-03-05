@@ -156,7 +156,7 @@ export default function DrillDownPage() {
 
   // ── CSV download ──
   const downloadCSV = () => {
-    const headers = ['Table Name', 'All Rules Pass Rate', 'Schema Rules Pass Rate', 'Table-Level Rules Pass Rate', 'Data Quality Rules Pass Rate', 'Skipped Columns'];
+    const headers = ['Table Name', 'All Rules Pass Rate', 'Data Type Check Pass Rate', 'Table Integrity Rules Pass Rate', 'Data Quality Check Pass Rate', 'Skipped Columns'];
     const csv = [headers.join(','), ...filteredRows.map(r => [r.tableName, r.allRate + '%', r.schRate + '%', r.tblRate + '%', r.dqRate + '%', r.skippedCols].join(','))].join('\n');
     const blob = new Blob([csv], { type: 'text/csv' });
     const url = URL.createObjectURL(blob);
@@ -211,9 +211,9 @@ export default function DrillDownPage() {
                 <tr>
                   <th style={thS}>Table Name</th>
                   <th style={thS}>All Rules Pass Rate</th>
-                  <th style={thS}>Schema Rules Pass Rate</th>
-                  <th style={thS}>Table-Level Rules Pass Rate</th>
-                  <th style={thS}>DQ Rules Pass Rate</th>
+                  <th style={thS}>Data Type Check Pass Rate</th>
+                  <th style={thS}>Table Integrity Rules Pass Rate</th>
+                  <th style={thS}>Data Quality Check Pass Rate</th>
                   <th style={thS}>Skipped Columns</th>
                 </tr>
               </thead>

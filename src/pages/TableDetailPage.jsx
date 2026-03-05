@@ -249,9 +249,9 @@ export default function TableDetailPage() {
 
   const cards = [
     { label: 'All Rules Pass Rate', sub: '(Schema + Table + DQ combined)', val: s.allRate + '%', detail: `${s.allPassed} / ${s.allTotal} passed`, color: rateColor(s.allRate), accent: 'var(--green)' },
-    { label: 'Schema Rules Pass Rate', sub: '(column type match checks)', val: s.schRate + '%', detail: `${s.schPassed} / ${s.schTotal} passed`, color: rateColor(s.schRate), accent: 'var(--purple)' },
-    { label: 'Table-Level Rules Pass Rate', sub: '(row count + column count)', val: s.tblRate + '%', detail: `${s.tblPassed} / ${s.tblTotal} passed`, color: rateColor(s.tblRate), accent: 'var(--cyan)' },
-    { label: 'Data Quality Rules Pass Rate', sub: '(null, unique, range, stats, regex)', val: s.dqRate + '%', detail: `${s.dqPassed} / ${s.dqTotal} passed`, color: rateColor(s.dqRate), accent: 'var(--blue)' },
+    { label: 'Data Type Check Pass Rate', sub: '(column type match checks)', val: s.schRate + '%', detail: `${s.schPassed} / ${s.schTotal} passed`, color: rateColor(s.schRate), accent: 'var(--purple)' },
+    { label: 'Table Integrity Rules Pass Rate', sub: '(row count + column count)', val: s.tblRate + '%', detail: `${s.tblPassed} / ${s.tblTotal} passed`, color: rateColor(s.tblRate), accent: 'var(--cyan)' },
+    { label: 'Data Quality Check Pass Rate', sub: '(null, unique, range, stats, regex)', val: s.dqRate + '%', detail: `${s.dqPassed} / ${s.dqTotal} passed`, color: rateColor(s.dqRate), accent: 'var(--blue)' },
     { label: 'Columns Skipped (No Rules)', sub: '(bad dates or 100% NULL)', val: s.skipCols, detail: `${s.skipCols} columns`, color: 'var(--amber)', accent: 'var(--amber)' },
   ];
 
@@ -292,9 +292,9 @@ export default function TableDetailPage() {
   const selS = { background: 'var(--card)', border: '1px solid var(--bdr)', borderRadius: 'var(--rs)', padding: '7px 10px', color: 'var(--t2)', fontFamily: 'var(--sans)', fontSize: 11, cursor: 'pointer', outline: 'none' };
 
   const tabCfg = [
-    { id: 'dq', label: '⬡ Data Quality Rules', count: data.dq.length, accent: 'var(--blue)' },
-    { id: 'schema', label: '◈ Schema Rules', count: data.schema.length, accent: 'var(--purple)' },
-    { id: 'table', label: '⊞ Table-Level Rules', count: data.table.length, accent: 'var(--cyan)' },
+    { id: 'dq', label: '⬡ Data Quality Check Rules', count: data.dq.length, accent: 'var(--blue)' },
+    { id: 'schema', label: '◈ Data Type Check Rules', count: data.schema.length, accent: 'var(--purple)' },
+    { id: 'table', label: '⊞ Table Integrity Rules', count: data.table.length, accent: 'var(--cyan)' },
   ];
 
   return (

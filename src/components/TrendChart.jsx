@@ -3,7 +3,7 @@ import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContai
 
 const filters = [
   { key: 'health', label: 'Health', color: 'var(--green)', hex: '#34D399' },
-  { key: 'schema', label: 'Schema', color: 'var(--purple)', hex: '#A78BFA' },
+  { key: 'schema', label: 'Data Type Check', color: 'var(--purple)', hex: '#A78BFA' },
   { key: 'dq', label: 'Data Quality', color: 'var(--blue)', hex: '#60A5FA' },
   { key: 'all', label: 'All Layers', color: 'var(--amber)', hex: '#FBBF24' },
 ];
@@ -34,22 +34,22 @@ export default function TrendChart({ metrics: m }) {
     return dates.map((date, i) => ({
       name: date,
       Health: m.trend.health[i],
-      Schema: m.trend.schema[i],
-      'Data Quality': m.trend.dq[i],
+      'Data Type Check': m.trend.schema[i],
+      'Data Quality Check': m.trend.dq[i],
     }));
   }, [m, dates]);
 
   const activeLines = active === 'all'
     ? [
       { key: 'Health', color: '#34D399' },
-      { key: 'Schema', color: '#A78BFA' },
-      { key: 'Data Quality', color: '#60A5FA' },
+      { key: 'Data Type Check', color: '#A78BFA' },
+      { key: 'Data Quality Check', color: '#60A5FA' },
     ]
     : active === 'health'
       ? [{ key: 'Health', color: '#34D399' }]
       : active === 'schema'
-        ? [{ key: 'Schema', color: '#A78BFA' }]
-        : [{ key: 'Data Quality', color: '#60A5FA' }];
+        ? [{ key: 'Data Type Check', color: '#A78BFA' }]
+        : [{ key: 'Data Quality Check', color: '#60A5FA' }];
 
   return (
     <div className="anim d9" style={{

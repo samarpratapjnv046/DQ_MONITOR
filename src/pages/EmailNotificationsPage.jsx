@@ -260,9 +260,9 @@ export default function EmailNotificationsPage() {
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 10, marginBottom: 12 }}>
             <ThresholdCard label="Overall Health Score Minimum" color="var(--green)"
               value={thresholds.health} onChange={v => setThresholds(t => ({ ...t, health: v }))} />
-            <ThresholdCard label="Schema Validation Minimum" color="var(--purple)"
+            <ThresholdCard label="Data Type Check Validation Minimum" color="var(--purple)"
               value={thresholds.schema} onChange={v => setThresholds(t => ({ ...t, schema: v }))} />
-            <ThresholdCard label="Data Quality Rules Minimum" color="var(--blue)"
+            <ThresholdCard label="Data Quality Check Rules Minimum" color="var(--blue)"
               value={thresholds.dq} onChange={v => setThresholds(t => ({ ...t, dq: v }))} />
           </div>
 
@@ -389,7 +389,7 @@ export default function EmailNotificationsPage() {
                     <tbody>
                       <tr><Td>Overall Health Score</Td><Td>90.0%</Td><Td><Metric c="red">{'{{health_score}}'}</Metric></Td><Td style={{ color: 'var(--red)' }}>✕ BREACH</Td></tr>
                       <tr><Td>Schema Validation</Td><Td>85.0%</Td><Td><Metric c="red">{'{{schema_score}}'}</Metric></Td><Td style={{ color: 'var(--red)' }}>✕ BREACH</Td></tr>
-                      <tr><Td>Data Quality Rules</Td><Td>95.0%</Td><Td><Metric c="red">{'{{dq_score}}'}</Metric></Td><Td style={{ color: 'var(--red)' }}>✕ BREACH</Td></tr>
+                      <tr><Td>Data Quality Check</Td><Td>95.0%</Td><Td><Metric c="red">{'{{dq_score}}'}</Metric></Td><Td style={{ color: 'var(--red)' }}>✕ BREACH</Td></tr>
                     </tbody>
                   </table>
 
@@ -399,9 +399,9 @@ export default function EmailNotificationsPage() {
                       <th key={h} style={{ textAlign: 'left', padding: '6px 10px', background: 'var(--elev)', color: 'var(--t3)', fontSize: 9, textTransform: 'uppercase', letterSpacing: 0.5, borderBottom: '1px solid var(--bdr)' }}>{h}</th>
                     ))}</tr></thead>
                     <tbody>
-                      <tr><Td>Schema</Td><Td><Tag>{'{{schema_passed}}'}</Tag></Td><Td><Tag>{'{{schema_failed}}'}</Tag></Td><Td>{'{{schema_score}}'}</Td></tr>
-                      <tr><Td>Table-Level</Td><Td><Tag>{'{{table_passed}}'}</Tag></Td><Td><Tag>{'{{table_failed}}'}</Tag></Td><Td>{'{{table_score}}'}</Td></tr>
-                      <tr><Td>Data Quality</Td><Td><Tag>{'{{dq_passed}}'}</Tag></Td><Td><Tag>{'{{dq_failed}}'}</Tag></Td><Td>{'{{dq_score}}'}</Td></tr>
+                      <tr><Td>Data Type Check</Td><Td><Tag>{'{{schema_passed}}'}</Tag></Td><Td><Tag>{'{{schema_failed}}'}</Tag></Td><Td>{'{{schema_score}}'}</Td></tr>
+                      <tr><Td>Table Integrity Rules</Td><Td><Tag>{'{{table_passed}}'}</Tag></Td><Td><Tag>{'{{table_failed}}'}</Tag></Td><Td>{'{{table_score}}'}</Td></tr>
+                      <tr><Td>Data Quality Check</Td><Td><Tag>{'{{dq_passed}}'}</Tag></Td><Td><Tag>{'{{dq_failed}}'}</Tag></Td><Td>{'{{dq_score}}'}</Td></tr>
                     </tbody>
                   </table>
 

@@ -8,10 +8,10 @@ const CovBar = ({ label, pct, colorClass, delay }) => {
   }, [pct, delay]);
 
   const gradients = {
-    ba: 'linear-gradient(90deg, #60A5FA, #93c5fd)',
-    ad: 'linear-gradient(90deg, #A78BFA, #c4b5fd)',
-    cu: 'linear-gradient(90deg, #34D399, #6ee7b7)',
-    tl: 'linear-gradient(90deg, #22D3EE, #67e8f9)',
+    ba: 'linear-gradient(90deg, #3B82F6, #60A5FA)',
+    ad: 'linear-gradient(90deg, #8B5CF6, #A78BFA)',
+    cu: 'linear-gradient(90deg, #10B981, #34D399)',
+    tl: 'linear-gradient(90deg, #06B6D4, #22D3EE)',
   };
 
   return (
@@ -26,13 +26,11 @@ const CovBar = ({ label, pct, colorClass, delay }) => {
         <div ref={ref} style={{
           height: '100%', borderRadius: '5px', width: '0%',
           background: gradients[colorClass],
-          display: 'flex', alignItems: 'center', justifyContent: 'flex-end',
-          paddingRight: '6px', fontSize: '9px', fontWeight: 600,
-          fontFamily: 'var(--mono)', color: 'var(--bg)',
           transition: 'width 1.2s cubic-bezier(.22,1,.36,1)',
-        }}>
-          {pct}%
-        </div>
+        }} />
+      </div>
+      <div style={{ fontSize: '11px', fontWeight: 700, fontFamily: 'var(--mono)', color: 'var(--t1)', width: '45px', textAlign: 'right', flexShrink: 0 }}>
+        {pct}%
       </div>
     </div>
   );

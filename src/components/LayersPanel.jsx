@@ -68,7 +68,7 @@ export default function LayersPanel({ metrics: m }) {
       </div>
       <LayerBar label="Datatype Check" layerKey="schema"
         rate={m.schema.rate} passed={m.schema.passed} total={m.schema.total} />
-      <LayerBar label="Table level rule" layerKey="table"
+      <LayerBar label="Table Integrity Rules" layerKey="table"
         rate={m.table.rate} passed={m.table.passed} total={m.table.total} />
       <LayerBar label="Data Quality Check" layerKey="dq"
         rate={m.dq.rate} passed={m.dq.passed} total={m.dq.total} />
