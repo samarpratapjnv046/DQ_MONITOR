@@ -70,9 +70,9 @@ const btnSecondary = {
 // ══════════════════════════════════════════════════════════════
 
 function RuleMappingProgress({ onComplete, onPreview, showPreview }) {
-  const [progress, setProgress] = useState(0);
-  const [stage, setStage] = useState('Initializing...');
-  const [started, setStarted] = useState(false);
+  const [progress, setProgress] = useState(showPreview ? 100 : 0);
+  const [stage, setStage] = useState(showPreview ? 'Rule mapping complete ✓' : 'Initializing...');
+  const [started, setStarted] = useState(!!showPreview);
 
   const stages = [
     { at: 0, text: 'Initializing connection...' },
@@ -90,6 +90,7 @@ function RuleMappingProgress({ onComplete, onPreview, showPreview }) {
 
   useEffect(() => {
     if (!started) return;
+    if (showPreview) return; // Already completed, don't re-run animation
     let p = 0;
     const interval = setInterval(() => {
       const increment = Math.random() * 3 + 0.5;
